@@ -5,6 +5,8 @@
   "description": "A command-driven SVG editor for the Software Design PJ1 assignment",
   "type": "module",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "cli": "tsc -p tsconfig.build.json && node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
