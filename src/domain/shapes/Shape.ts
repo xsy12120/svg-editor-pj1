@@ -1,4 +1,4 @@
-import type { ShapeVisitor } from "./ShapeVisitor.js";
+import type { ShapeDescriptor } from "./ShapeDescriptor.js";
 
 export abstract class Shape {
   constructor(private readonly shapeId: string) {}
@@ -7,5 +7,5 @@ export abstract class Shape {
     return this.shapeId;
   }
 
-  abstract accept<TResult>(visitor: ShapeVisitor<TResult>): TResult;
+  abstract toDescriptor(): ShapeDescriptor;
 }

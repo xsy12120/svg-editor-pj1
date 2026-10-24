@@ -1,5 +1,6 @@
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { ShapeProvider } from "./ShapeProvider.js";
+import type { ShapeInit } from "./ShapeInit.js";
 
 export class ShapeFactory {
   private readonly providers = new Map<string, ShapeProvider>();
@@ -12,12 +13,21 @@ export class ShapeFactory {
     this.providers.set(provider.typeName, provider);
   }
 
-  create(typeName: string, args: readonly string[]): Shape {
+  create(init: ShapeInit): Shape {
+    return this.requireProvider(init.typeName).create(init);
+  }
+
+  createFromCliArgs(typeName: string, args: readonly string[]): Shape {
+    const provider = this.requireProvider(typeName);
+    return provider.create(provider.createFromCliArgs(args));
+  }
+
+  private requireProvider(typeName: string): ShapeProvider {
     const provider = this.providers.get(typeName);
     if (provider === undefined) {
       throw new Error(`unknown shape type: ${typeName} (is the plugin loaded?)`);
     }
 
-    return provider.create(args);
+    return provider;
   }
 }

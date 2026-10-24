@@ -1,5 +1,8 @@
 import { Shape } from "./Shape.js";
-import type { ShapeVisitor } from "./ShapeVisitor.js";
+import type {
+  ShapeAttribute,
+  ShapeDescriptor
+} from "./ShapeDescriptor.js";
 
 export interface RectInit {
   readonly id: string;
@@ -46,7 +49,21 @@ export class Rect extends Shape {
     return this.fillColor;
   }
 
-  override accept<TResult>(visitor: ShapeVisitor<TResult>): TResult {
-    return visitor.visitRect(this);
+  override toDescriptor(): ShapeDescriptor {
+    const attributes: ShapeAttribute[] = [
+      { name: "x", value: String(this.positionX) },
+      { name: "y", value: String(this.positionY) },
+      { name: "w", value: String(this.rectWidth) },
+      { name: "h", value: String(this.rectHeight) }
+    ];
+    if (this.fillColor !== undefined) {
+      attributes.push({ name: "fill", value: this.fillColor });
+    }
+
+    return {
+      typeName: "rect",
+      id: this.id,
+      attributes
+    };
   }
 }

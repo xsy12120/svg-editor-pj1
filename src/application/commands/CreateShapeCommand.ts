@@ -19,7 +19,7 @@ export class CreateShapeCommand implements UndoableCommand<EditorSession> {
       throw new Error("no document. use 'init' or 'read' first");
     }
 
-    const shape = this.shapeFactory.create(this.typeName, this.args);
+    const shape = this.shapeFactory.createFromCliArgs(this.typeName, this.args);
     if (document.hasShape(shape.id)) {
       throw new Error(`id already exists: ${shape.id}`);
     }
