@@ -13,7 +13,7 @@ interface ProcessResult {
   stderr: string;
 }
 
-function runCli(): Promise<ProcessResult> {
+function runCli(input = ""): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
     const npmExecPath = process.env["npm_execpath"];
     if (npmExecPath === undefined) {
@@ -76,11 +76,11 @@ function runCli(): Promise<ProcessResult> {
       });
     });
 
-    child.stdin.end();
+    child.stdin.end(input);
   });
 }
 
-describe("CLI startup", () => {
+describe("CLI", () => {
   it("starts the editor and exits cleanly at end of input", async () => {
     const result = await runCli();
 
@@ -89,5 +89,12 @@ describe("CLI startup", () => {
       "svg-editor 0.1 — type 'help' for commands"
     );
     expect(result.stdout).toContain("svg> ");
+  });
+
+  it("creates the default canvas with the init command", async () => {
+    const result = await runCli("init\n");
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("canvas 800x600 created");
   });
 });
