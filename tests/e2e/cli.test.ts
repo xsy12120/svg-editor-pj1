@@ -114,4 +114,27 @@ describe("CLI", () => {
       /rect#r1\s+x=10 y=20 w=100 h=50 fill=#f00/
     );
   });
+
+  it("undoes and redoes a created rectangle", async () => {
+    const result = await runCli(
+      [
+        "init",
+        "create rect r1 10 20 100 50 #f00",
+        "undo",
+        "tree",
+        "redo",
+        "tree"
+      ].join("\n")
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("rect#r1 created");
+    expect(result.stdout).not.toContain("error: unknown command");
+
+    const renderedRectRows =
+      result.stdout.match(
+        /[└├]── rect#r1\s+x=10 y=20 w=100 h=50 fill=#f00/g
+      ) ?? [];
+    expect(renderedRectRows).toHaveLength(1);
+  });
 });
