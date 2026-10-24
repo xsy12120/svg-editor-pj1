@@ -24,34 +24,36 @@ export class CommandInvoker<TContext> {
   undo(): CommandResult {
     this.ensureHistoryAvailable("undo");
 
-    const command = this.undoStack.pop();
+    const command = this.undoStack.at(-1);
     if (command === undefined) {
       throw new Error("nothing to undo");
     }
 
     const result = command.undo(this.context);
-    if (result.success) {
-      this.redoStack.push(command);
-    } else {
-      this.undoStack.push(command);
+    if (!result.success) {
+      return result;
     }
+
+    this.undoStack.pop();
+    this.redoStack.push(command);
     return result;
   }
 
   redo(): CommandResult {
     this.ensureHistoryAvailable("redo");
 
-    const command = this.redoStack.pop();
+    const command = this.redoStack.at(-1);
     if (command === undefined) {
       throw new Error("nothing to redo");
     }
 
     const result = command.execute(this.context);
-    if (result.success) {
-      this.undoStack.push(command);
-    } else {
-      this.redoStack.push(command);
+    if (!result.success) {
+      return result;
     }
+
+    this.redoStack.pop();
+    this.undoStack.push(command);
     return result;
   }
 
