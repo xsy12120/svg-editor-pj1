@@ -1,9 +1,11 @@
 import type { EditorSession } from "../EditorSession.js";
-import type { Command } from "./Command.js";
 import type { CommandResult } from "./CommandResult.js";
+import type { QueryCommand } from "./ExecutableCommand.js";
 import type { DocumentTreeRenderer } from "../ports/DocumentTreeRenderer.js";
 
-export class TreeCommand implements Command<EditorSession> {
+export class TreeCommand implements QueryCommand<EditorSession> {
+  readonly kind = "query";
+
   constructor(private readonly renderer: DocumentTreeRenderer) {}
 
   validate(session: EditorSession): void {

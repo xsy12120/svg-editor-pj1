@@ -1,8 +1,10 @@
 import type { EditorSession } from "../EditorSession.js";
-import type { Command } from "./Command.js";
 import type { CommandResult } from "./CommandResult.js";
+import type { DocumentCommand } from "./ExecutableCommand.js";
 
-export class InitDocumentCommand implements Command<EditorSession> {
+export class InitDocumentCommand implements DocumentCommand<EditorSession> {
+  readonly kind = "document";
+
   constructor(
     private readonly width: number,
     private readonly height: number

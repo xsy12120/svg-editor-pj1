@@ -1,0 +1,16 @@
+import type { EditorSession } from "../EditorSession.js";
+import type { CommandInvoker } from "../history/CommandInvoker.js";
+import type { CommandResult } from "./CommandResult.js";
+import type { ControlCommand } from "./ExecutableCommand.js";
+
+export class RedoCommand implements ControlCommand<EditorSession> {
+  readonly kind = "control";
+
+  constructor(private readonly invoker: CommandInvoker<EditorSession>) {}
+
+  validate(): void {}
+
+  execute(): CommandResult {
+    return this.invoker.redo();
+  }
+}

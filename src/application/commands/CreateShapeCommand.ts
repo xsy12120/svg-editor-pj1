@@ -5,6 +5,8 @@ import type { CommandResult } from "./CommandResult.js";
 import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class CreateShapeCommand implements UndoableCommand<EditorSession> {
+  readonly kind = "edit";
+
   private createdShape: Shape | null = null;
 
   constructor(

@@ -1,8 +1,9 @@
 import { createInterface } from "node:readline";
 import type { Readable, Writable } from "node:stream";
 
-import type { EditorSession } from "../../application/EditorSession.js";
 import type { CommandRegistry } from "../../application/extensions/CommandRegistry.js";
+import type { EditorSession } from "../../application/EditorSession.js";
+import type { CommandProcessor } from "../../application/history/CommandProcessor.js";
 import { CommandParser } from "./CommandParser.js";
 import type { CliPresenter } from "./CliPresenter.js";
 
@@ -13,8 +14,8 @@ export class CliApplication {
   constructor(
     private readonly input: Readable,
     private readonly output: Writable,
-    private readonly session: EditorSession,
     private readonly commands: CommandRegistry<EditorSession>,
+    private readonly processor: CommandProcessor<EditorSession>,
     private readonly presenter: CliPresenter,
     private readonly parser = new CommandParser()
   ) {}
@@ -33,8 +34,7 @@ export class CliApplication {
       if (parsed !== null) {
         try {
           const command = this.commands.create(parsed.name, parsed.args);
-          command.validate(this.session);
-          this.presenter.present(command.execute(this.session));
+          this.presenter.present(this.processor.execute(command));
         } catch (error) {
           this.presenter.presentError(error);
         }

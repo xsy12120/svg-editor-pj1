@@ -17,6 +17,8 @@ function success(message: string): CommandResult {
 }
 
 class AddCommand implements UndoableCommand<CounterState> {
+  readonly kind = "edit";
+
   constructor(private readonly amount: number) {}
 
   validate(): void {
@@ -37,6 +39,8 @@ class AddCommand implements UndoableCommand<CounterState> {
 }
 
 class InvalidCommand implements UndoableCommand<CounterState> {
+  readonly kind = "edit";
+
   validate(): void {
     throw new Error("invalid command");
   }

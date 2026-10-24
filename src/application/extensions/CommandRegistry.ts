@@ -1,4 +1,4 @@
-import type { Command } from "../commands/Command.js";
+import type { ExecutableCommand } from "../commands/ExecutableCommand.js";
 import type { CommandProvider } from "./CommandProvider.js";
 
 export class CommandRegistry<TContext> {
@@ -12,7 +12,7 @@ export class CommandRegistry<TContext> {
     this.providers.set(provider.name, provider);
   }
 
-  create(name: string, args: readonly string[]): Command<TContext> {
+  create(name: string, args: readonly string[]): ExecutableCommand<TContext> {
     const provider = this.providers.get(name);
     if (provider === undefined) {
       throw new Error(`unknown command: ${name}`);

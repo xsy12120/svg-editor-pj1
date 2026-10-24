@@ -25,8 +25,8 @@ src/
     extensions/     # ShapeProvider、ShapeFactory
   application/
     EditorSession.ts
-    commands/       # UndoableCommand 及具体编辑命令
-    history/        # CommandInvoker、CommandHistory
+    commands/       # ExecutableCommand、UndoableCommand 及具体命令
+    history/        # CommandProcessor、CommandInvoker
     extensions/     # CommandProvider、CommandRegistry
     ports/          # SvgCodec、FileStore
   infrastructure/
@@ -66,16 +66,18 @@ package "interfaces/cli" {
 
 package "application" {
   [EditorSession]
+  [CommandProcessor]
   [CommandInvoker]
-  [CommandHistory]
   [UndoableCommand]
   [CommandRegistry]
   [SvgCodec] <<port>>
   [FileStore] <<port>>
-  [EditorSession] --> [CommandRegistry]
-  [EditorSession] --> [CommandInvoker]
-  [CommandInvoker] --> [CommandHistory]
-  [CommandHistory] --> [UndoableCommand]
+  [CliApplication] --> [CommandRegistry]
+  [CliApplication] --> [CommandProcessor]
+  [CommandProcessor] --> [EditorSession]
+  [CommandProcessor] --> [CommandInvoker]
+  [CommandProcessor] --> [UndoableCommand]
+  [CommandInvoker] --> [UndoableCommand]
   [EditorSession] --> [SvgCodec]
   [EditorSession] --> [FileStore]
 }
@@ -99,7 +101,6 @@ package "infrastructure" {
   [XmlSvgCodec] --> [ShapeFactory]
 }
 
-[CliApplication] --> [EditorSession]
 [SvgCodec] <|.. [XmlSvgCodec]
 [FileStore] <|.. [NodeFileStore]
 @enduml
@@ -113,6 +114,7 @@ package "infrastructure" {
 
 ```typescript
 interface UndoableCommand {
+  readonly kind: "edit";
   validate(context: CommandContext): void;
   execute(context: CommandContext): CommandResult;
   undo(context: CommandContext): CommandResult;
@@ -122,13 +124,14 @@ interface UndoableCommand {
 命令由 `CommandProvider` 创建，CLI 不直接修改文档：
 
 ```text
-CLI -> CommandParser -> CommandRegistry -> UndoableCommand
-    -> validate -> execute -> CommandHistory -> CliPresenter
+CLI -> CommandParser -> CommandRegistry -> CommandProcessor
+    -> 编辑命令：CommandInvoker -> validate -> execute -> CliPresenter
+    -> 文档/查询/控制命令：处理器直接执行
 ```
 
 `CommandResult` 包含成功状态、消息和受影响 id，命令本身不直接输出文本。这样后续增加 GUI 或智能体入口时，无需重写应用逻辑。
 
-`CommandHistory` 只保存命令对象，不保存整份文档快照：
+`CommandInvoker` 只保存命令对象，不保存整份文档快照：
 
 ```text
 execute：校验并执行命令，压入 undo 栈，清空 redo 栈
