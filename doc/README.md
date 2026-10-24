@@ -69,6 +69,7 @@ package "application" {
   [CommandProcessor]
   [CommandInvoker]
   [UndoableCommand]
+  [PreparedEdit]
   [CommandRegistry]
   [SvgCodec] <<port>>
   [FileStore] <<port>>
@@ -78,6 +79,8 @@ package "application" {
   [CommandProcessor] --> [CommandInvoker]
   [CommandProcessor] --> [UndoableCommand]
   [CommandInvoker] --> [UndoableCommand]
+  [UndoableCommand] --> [PreparedEdit]
+  [CommandInvoker] --> [PreparedEdit]
   [EditorSession] --> [SvgCodec]
   [EditorSession] --> [FileStore]
 }
@@ -115,9 +118,12 @@ package "infrastructure" {
 ```typescript
 interface UndoableCommand {
   readonly kind: "edit";
-  validate(context: CommandContext): void;
-  execute(context: CommandContext): CommandResult;
-  undo(context: CommandContext): CommandResult;
+  prepare(context: CommandContext): PreparedEdit;
+}
+
+interface PreparedEdit {
+  apply(context: CommandContext): CommandResult;
+  revert(context: CommandContext): CommandResult;
 }
 ```
 
@@ -125,18 +131,18 @@ interface UndoableCommand {
 
 ```text
 CLI -> CommandParser -> CommandRegistry -> CommandProcessor
-    -> 编辑命令：CommandInvoker -> validate -> execute -> CliPresenter
+    -> 编辑命令：CommandInvoker -> prepare -> PreparedEdit.apply
     -> 文档/查询/控制命令：处理器直接执行
 ```
 
 `CommandResult` 包含成功状态、消息和受影响 id，命令本身不直接输出文本。这样后续增加 GUI 或智能体入口时，无需重写应用逻辑。
 
-`CommandInvoker` 只保存命令对象，不保存整份文档快照：
+`CommandInvoker` 只保存已经准备好的 `PreparedEdit`，不保存整份文档快照：
 
 ```text
-execute：校验并执行命令，压入 undo 栈，清空 redo 栈
-undo：弹出命令并调用 undo()，压入 redo 栈
-redo：弹出命令并再次调用 execute()，压入 undo 栈
+execute：command.prepare() -> edit.apply() -> 压入 undo 栈并清空 redo 栈
+undo：edit.revert() 成功后，将 edit 移入 redo 栈
+redo：edit.apply() 成功后，将 edit 移回 undo 栈
 ```
 
 每条命令保存恢复所需的局部信息：
@@ -155,13 +161,13 @@ redo：弹出命令并再次调用 execute()，压入 undo 栈
 
 ### 3.2 命令原子性
 
-所有编辑命令遵循 `validate -> plan -> apply`：
+所有编辑命令遵循 `prepare -> PreparedEdit.apply`：
 
-1. `validate` 检查 id、容器类型、数值、属性和结构规则。
-2. `plan` 算出目标位置、受影响对象和反向恢复信息。
+1. `prepare` 检查 id、容器类型、数值、属性和结构规则。
+2. `prepare` 同时生成包含目标和反向信息的 `PreparedEdit`。
 3. `apply` 完成不会被业务规则拒绝的修改。
 
-例如 `group` 必须在修改结构前检查所有成员存在、没有祖先后代冲突，并记录每个成员的原父节点和索引。任何检查失败时，文档和历史栈都不改变。
+例如 `group` 必须在修改结构前检查所有成员存在、没有祖先后代冲突，并生成包含每个成员原父节点和索引的 PreparedEdit。任何准备失败时，文档和历史栈都不改变。
 
 ### 3.3 Composite
 
@@ -245,7 +251,7 @@ Shape
 - [ ] `domain` 不依赖 CLI、XML 或文件系统。
 - [ ] CLI 只通过 `EditorSession` 编辑文档。
 - [ ] `Group` 与叶子图形支持相同的标准操作。
-- [ ] 每条编辑命令都有 `execute -> undo -> redo -> undo` 测试。
+- [ ] 每条编辑命令都有 `prepare -> apply -> revert -> apply` 测试。
 - [ ] 结构命令能恢复原父节点、成员顺序和 z-order。
 - [ ] 失败命令不改变文档和历史栈。
 - [ ] 文档命令后的 undo/redo 门禁符合要求。
@@ -255,7 +261,7 @@ Shape
 ## 9. 质量保证
 
 - **领域测试**：id 唯一性、父子关系、递归移动/缩放、属性校验和非法结构。
-- **命令测试**：失败不改变状态；所有命令完成 execute/undo/redo 往返；结构位置准确恢复。
+- **命令测试**：准备失败不改变状态；所有命令完成 prepare/apply/revert 往返；结构位置准确恢复。
 - **SVG 测试**：元素 round-trip、缺 id 补全、容器嵌套、属性省略语义。
 - **端到端测试**：回放作业中的完整 transcript，检查成功和错误输出。
 - **依赖检查**：用导入检查或 CI 脚本确认领域层未依赖外层模块。
