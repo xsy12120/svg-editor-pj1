@@ -1,22 +1,23 @@
 import type { CommandResult } from "../commands/CommandResult.js";
+import type { PreparedEdit } from "../commands/PreparedEdit.js";
 import type { UndoableCommand } from "../commands/UndoableCommand.js";
 
 export class CommandInvoker<TContext> {
-  private readonly undoStack: UndoableCommand<TContext>[] = [];
-  private readonly redoStack: UndoableCommand<TContext>[] = [];
+  private readonly undoStack: PreparedEdit<TContext>[] = [];
+  private readonly redoStack: PreparedEdit<TContext>[] = [];
   private historyBlocked = false;
 
   constructor(private readonly context: TContext) {}
 
   execute(command: UndoableCommand<TContext>): CommandResult {
-    command.validate(this.context);
-    const result = command.execute(this.context);
+    const edit = command.prepare(this.context);
+    const result = edit.apply(this.context);
     if (!result.success) {
       return result;
     }
 
     this.historyBlocked = false;
-    this.undoStack.push(command);
+    this.undoStack.push(edit);
     this.redoStack.length = 0;
     return result;
   }
@@ -24,36 +25,36 @@ export class CommandInvoker<TContext> {
   undo(): CommandResult {
     this.ensureHistoryAvailable("undo");
 
-    const command = this.undoStack.at(-1);
-    if (command === undefined) {
+    const edit = this.undoStack.at(-1);
+    if (edit === undefined) {
       throw new Error("nothing to undo");
     }
 
-    const result = command.undo(this.context);
+    const result = edit.revert(this.context);
     if (!result.success) {
       return result;
     }
 
     this.undoStack.pop();
-    this.redoStack.push(command);
+    this.redoStack.push(edit);
     return result;
   }
 
   redo(): CommandResult {
     this.ensureHistoryAvailable("redo");
 
-    const command = this.redoStack.at(-1);
-    if (command === undefined) {
+    const edit = this.redoStack.at(-1);
+    if (edit === undefined) {
       throw new Error("nothing to redo");
     }
 
-    const result = command.execute(this.context);
+    const result = edit.apply(this.context);
     if (!result.success) {
       return result;
     }
 
     this.redoStack.pop();
-    this.undoStack.push(command);
+    this.undoStack.push(edit);
     return result;
   }
 

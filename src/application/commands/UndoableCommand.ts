@@ -1,7 +1,6 @@
-import type { CommandResult } from "./CommandResult.js";
-import type { Command } from "./Command.js";
+import type { PreparedEdit } from "./PreparedEdit.js";
 
-export interface UndoableCommand<TContext> extends Command<TContext> {
+export interface UndoableCommand<TContext> {
   readonly kind: "edit";
-  undo(context: TContext): CommandResult;
+  prepare(context: TContext): PreparedEdit<TContext>;
 }

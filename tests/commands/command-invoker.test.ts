@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { CommandInvoker } from "../../src/application/history/CommandInvoker.js";
 import type { CommandResult } from "../../src/application/commands/CommandResult.js";
+import type { PreparedEdit } from "../../src/application/commands/PreparedEdit.js";
 import type { UndoableCommand } from "../../src/application/commands/UndoableCommand.js";
 
 interface CounterState {
@@ -21,51 +22,46 @@ class AddCommand implements UndoableCommand<CounterState> {
 
   constructor(private readonly amount: number) {}
 
-  validate(): void {
+  prepare(): PreparedEdit<CounterState> {
     if (this.amount <= 0) {
       throw new Error("amount must be positive");
     }
-  }
 
-  execute(state: CounterState): CommandResult {
-    state.value += this.amount;
-    return success(`added ${this.amount}`);
-  }
-
-  undo(state: CounterState): CommandResult {
-    state.value -= this.amount;
-    return success(`removed ${this.amount}`);
+    const amount = this.amount;
+    return {
+      apply(state: CounterState): CommandResult {
+        state.value += amount;
+        return success(`added ${amount}`);
+      },
+      revert(state: CounterState): CommandResult {
+        state.value -= amount;
+        return success(`removed ${amount}`);
+      }
+    };
   }
 }
 
 class InvalidCommand implements UndoableCommand<CounterState> {
   readonly kind = "edit";
 
-  validate(): void {
+  prepare(): PreparedEdit<CounterState> {
     throw new Error("invalid command");
-  }
-
-  execute(): CommandResult {
-    throw new Error("execute must not run after validation fails");
-  }
-
-  undo(): CommandResult {
-    throw new Error("undo must not run for an invalid command");
   }
 }
 
 class FailingUndoCommand implements UndoableCommand<CounterState> {
   readonly kind = "edit";
 
-  validate(): void {}
-
-  execute(state: CounterState): CommandResult {
-    state.value += 1;
-    return success("failing command executed");
-  }
-
-  undo(): CommandResult {
-    throw new Error("undo failed");
+  prepare(): PreparedEdit<CounterState> {
+    return {
+      apply(state: CounterState): CommandResult {
+        state.value += 1;
+        return success("failing command executed");
+      },
+      revert(): CommandResult {
+        throw new Error("undo failed");
+      }
+    };
   }
 }
 
@@ -73,21 +69,45 @@ class FailingRedoCommand implements UndoableCommand<CounterState> {
   readonly kind = "edit";
   private executeCount = 0;
 
-  validate(): void {}
+  prepare(): PreparedEdit<CounterState> {
+    return {
+      apply: (state: CounterState): CommandResult => {
+        this.executeCount += 1;
+        if (this.executeCount > 1) {
+          throw new Error("redo failed");
+        }
 
-  execute(state: CounterState): CommandResult {
-    this.executeCount += 1;
-    if (this.executeCount > 1) {
-      throw new Error("redo failed");
-    }
-
-    state.value += 1;
-    return success("redoable command executed");
+        state.value += 1;
+        return success("redoable command executed");
+      },
+      revert: (state: CounterState): CommandResult => {
+        state.value -= 1;
+        return success("redoable command undone");
+      }
+    };
   }
+}
 
-  undo(state: CounterState): CommandResult {
-    state.value -= 1;
-    return success("redoable command undone");
+class TrackedCommand implements UndoableCommand<CounterState> {
+  readonly kind = "edit";
+  prepareCount = 0;
+  applyCount = 0;
+  revertCount = 0;
+
+  prepare(): PreparedEdit<CounterState> {
+    this.prepareCount += 1;
+    return {
+      apply: (state: CounterState): CommandResult => {
+        this.applyCount += 1;
+        state.value += 1;
+        return success("tracked command applied");
+      },
+      revert: (state: CounterState): CommandResult => {
+        this.revertCount += 1;
+        state.value -= 1;
+        return success("tracked command reverted");
+      }
+    };
   }
 }
 
@@ -122,7 +142,7 @@ describe("CommandInvoker", () => {
     expect(state.value).toBe(2);
   });
 
-  it("does not execute or record a command whose validation fails", () => {
+  it("does not apply or record an edit whose preparation fails", () => {
     const state = { value: 0 };
     const invoker = new CommandInvoker(state);
 
@@ -153,5 +173,19 @@ describe("CommandInvoker", () => {
 
     expect(() => invoker.redo()).toThrow("redo failed");
     expect(() => invoker.redo()).toThrow("redo failed");
+  });
+
+  it("reuses one prepared edit for execute, undo and redo", () => {
+    const state = { value: 0 };
+    const invoker = new CommandInvoker(state);
+    const command = new TrackedCommand();
+
+    invoker.execute(command);
+    invoker.undo();
+    invoker.redo();
+
+    expect(command.prepareCount).toBe(1);
+    expect(command.applyCount).toBe(2);
+    expect(command.revertCount).toBe(1);
   });
 });
