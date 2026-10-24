@@ -1,0 +1,52 @@
+import { Shape } from "./Shape.js";
+import type { ShapeVisitor } from "./ShapeVisitor.js";
+
+export interface RectInit {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly fill?: string;
+}
+
+export class Rect extends Shape {
+  private readonly positionX: number;
+  private readonly positionY: number;
+  private readonly rectWidth: number;
+  private readonly rectHeight: number;
+  private readonly fillColor: string | undefined;
+
+  constructor(init: RectInit) {
+    super(init.id);
+    this.positionX = init.x;
+    this.positionY = init.y;
+    this.rectWidth = init.width;
+    this.rectHeight = init.height;
+    this.fillColor = init.fill;
+  }
+
+  get x(): number {
+    return this.positionX;
+  }
+
+  get y(): number {
+    return this.positionY;
+  }
+
+  get width(): number {
+    return this.rectWidth;
+  }
+
+  get height(): number {
+    return this.rectHeight;
+  }
+
+  get fill(): string | undefined {
+    return this.fillColor;
+  }
+
+  override accept<TResult>(visitor: ShapeVisitor<TResult>): TResult {
+    return visitor.visitRect(this);
+  }
+}

@@ -176,6 +176,7 @@ Shape
 - `CommandProvider` 提供命令解析、帮助信息和命令创建能力。
 - `SvgCodec` 和 `FileStore` 隔离 XML 与文件系统。
 - 内置类型也在 `bootstrap` 中注册，后续 `box` 插件复用同一路径。
+- `ShapeVisitor` 负责与图形类型相关的输出，目前用于 `tree` 格式化，避免在展示层散落图形类型判断。
 
 按名字分派仅允许以下两处，均标记为待重构：
 
