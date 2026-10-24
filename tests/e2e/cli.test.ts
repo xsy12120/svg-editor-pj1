@@ -97,4 +97,21 @@ describe("CLI", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("canvas 800x600 created");
   });
+
+  it("creates a rectangle and includes it in the document tree", async () => {
+    const result = await runCli(
+      [
+        "init",
+        "create rect r1 10 20 100 50 #f00",
+        "tree"
+      ].join("\n")
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("rect#r1 created");
+    expect(result.stdout).toContain("svg (800x600)");
+    expect(result.stdout).toMatch(
+      /rect#r1\s+x=10 y=20 w=100 h=50 fill=#f00/
+    );
+  });
 });
