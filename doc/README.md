@@ -1,58 +1,65 @@
-# PJ1 Phase 1：SVG 编辑器架构方案
+# PJ1 Phase 1：SVG 编辑器
 
-> 本文档是 Phase 1 的架构基线。实现完成后，需按实际代码更新“一致性自查”。
+## 1. 架构方案
 
-## 1. 架构目标
+### 1.1 架构目标
 
-项目采用分层架构，以 **Command** 作为所有编辑行为的统一入口，以 **Composite** 表示 SVG 图形树，以**反向命令**实现 undo/redo。
+项目采用分层架构：
 
-- CLI、未来的 GUI 或智能体入口复用同一套编辑能力。
-- 一条编辑命令对应一个 undo 单元，命令成功后才进入历史栈。
-- `<g>` 与叶子图形统一支持 `move`、`scale`、`set`、`delete` 等操作。
-- `domain` 不依赖 CLI、XML 或文件系统，并通过 Provider/Port 提供扩展点。
-- 本阶段实现 `rect`、`circle`、`ellipse`、`line`、`text`、`g`；插件类型 `box` 暂不实现。
+- **Command** 是所有编辑行为的唯一入口，CLI 不直接修改文档。
+- 编辑命令使用 **PreparedEdit 反向操作**实现 undo/redo，不使用整文档快照。
+- **ContainerShape + Composite** 统一表示图形树。
+- Document 是已挂载树、id 索引和 shapeCount 的唯一所有者。
+- SVG、文件系统和 CLI 通过 Port/Adapter 与核心逻辑隔离。
+- 内置命令和图形也通过 Provider 注册。
+- tree/show 返回结构化 Snapshot，CLI 只负责排版。
 
-## 2. 模块划分
+Phase 1 实现 `rect`、`circle`、`ellipse`、`line`、`text`、`g`。`box` 属于后续插件阶段，本阶段返回未注册类型错误。
 
-计划目录如下，具体文件名可在实现中微调，但职责和依赖方向应保持稳定：
+### 1.2 模块划分
 
 ```text
 src/
   domain/
-    model/          # Document、id 索引、父子关系和不变量
-    geometry/       # 坐标、尺寸和变换
-    shapes/         # Shape、Group 及各叶子图形
-    extensions/     # ShapeProvider、ShapeFactory
+    model/          # Document、CanvasSize、ShapePlacement
+    shapes/         # Shape、ContainerShape、Group、叶子图形、
+                    # Point、Size、ShapeId、ShapeStyle 等值对象
   application/
     EditorSession.ts
-    commands/       # ExecutableCommand、UndoableCommand 及具体命令
+    commands/       # Command、PreparedEdit、具体命令和 ShapeFeedback
     history/        # CommandProcessor、CommandInvoker
     extensions/     # CommandProvider、CommandRegistry
-    ports/          # SvgCodec、FileStore
+    queries/        # Tree/ShapeDetails Snapshot 和 Builder
+    shapes/         # ShapeInit、ShapeProvider、ShapeFactory、providers
+    ports/          # SvgCodec、FileStore、Renderer Ports
   infrastructure/
-    svg/            # XML/SVG 解析、映射和序列化
-    fs/             # 文件系统实现
+    svg/            # XmlSvgCodec、Parser、Serializer、IdAllocator、Transform
+    fs/             # NodeFileStore
   interfaces/
-    cli/            # REPL、参数解析和结果展示
-  bootstrap/        # 注册内置 Provider 并组装依赖
+    cli/            # REPL、Parser、Presenter 和具体 Renderer
+  shared/errors/    # UserFacingError、UserInputError、CommandRejectedError
+  bootstrap/        # CompositionRoot
+  main.ts
 tests/
+  application/ commands/ domain/ infrastructure/
+  interfaces/ shapes/ e2e/ support/
 ```
 
-各模块职责：
-
-| 模块 | 职责 | 不应承担 |
+| 模块 | 职责 | 不承担 |
 |---|---|---|
-| `domain/model` | 文档、id 索引、父子关系和结构不变量 | 文件 IO、参数解析、输出 |
-| `domain/geometry` | 坐标、尺寸和数值规则 | XML 或 CLI 格式 |
-| `domain/shapes` | Composite 结构、图形属性和递归操作 | 历史栈、命令分发 |
-| `application/commands` | 校验、执行编辑操作及反向恢复 | 打印结果、读取文件 |
-| `application/history` | 执行命令、维护 undo/redo 和历史门禁 | 具体图形几何逻辑 |
-| `application/ports` | SVG 编解码与文件读写接口 | Node.js 等具体实现 |
-| `infrastructure` | 实现 XML/SVG、文件系统等外部能力 | 绕过 Command 修改文档 |
-| `interfaces/cli` | 输入解析和结果格式化 | 保存图形状态、实现撤销 |
-| `bootstrap` | 注册实现并完成依赖注入 | 业务规则 |
+| `domain/model` | Document、画布尺寸、id 索引、父子关系、挂载状态 | CLI、XML、文件 IO |
+| `domain/shapes` | Composite、图形操作、值对象和领域不变量 | 历史栈、命令分发 |
+| `application/commands` | 准备、应用和反向执行操作 | 打印文本、直接访问 Node.js fs |
+| `application/history` | 命令分类执行、历史栈和门禁 | 具体图形几何规则 |
+| `application/queries` | 构建结构化 tree/show 结果 | CLI 排版 |
+| `application/shapes` | Provider 注册、统一创建和公共样式应用 | 具体图形几何实现 |
+| `application/ports` | SVG、文件和展示输出抽象 | 具体外部实现 |
+| `infrastructure` | XML/SVG、文件系统、原子写入 | 修改命令历史 |
+| `interfaces/cli` | REPL、参数解析、Snapshot 排版 | 保存领域状态 |
+| `shared/errors` | 用户错误与内部异常分类 | 业务规则 |
+| `bootstrap` | 注册实现并组装依赖 | 业务决策 |
 
-包图：
+### 1.3 包图
 
 ```plantuml
 @startuml
@@ -60,214 +67,275 @@ skinparam packageStyle rectangle
 left to right direction
 
 package "interfaces/cli" {
-  [CliApplication] --> [CommandParser]
-  [CliApplication] --> [CliPresenter]
+  [CliApplication]
+  [CommandParser]
+  [CliPresenter]
+  [CLI Renderers]
 }
 
 package "application" {
-  [EditorSession]
+  [CommandRegistry]
   [CommandProcessor]
   [CommandInvoker]
-  [UndoableCommand]
+  [ExecutableCommand]
   [PreparedEdit]
-  [CommandRegistry]
+  [EditorSession]
+  [Query Builders]
   [SvgCodec] <<port>>
   [FileStore] <<port>>
-  [CliApplication] --> [CommandRegistry]
-  [CliApplication] --> [CommandProcessor]
-  [CommandProcessor] --> [EditorSession]
-  [CommandProcessor] --> [CommandInvoker]
-  [CommandProcessor] --> [UndoableCommand]
-  [CommandInvoker] --> [UndoableCommand]
-  [UndoableCommand] --> [PreparedEdit]
-  [CommandInvoker] --> [PreparedEdit]
-  [EditorSession] --> [SvgCodec]
-  [EditorSession] --> [FileStore]
+  [Renderer Ports] <<port>>
 }
 
 package "domain" {
   [Document]
   [Shape]
+  [ContainerShape]
   [Group]
-  [ShapeFactory]
-  [ShapeProvider]
-  [Document] *-- [Shape]
-  [Group] --> [Shape]
-  [ShapeFactory] --> [ShapeProvider]
-  [UndoableCommand] --> [Document]
-  [UndoableCommand] --> [ShapeFactory]
+  [Leaf Shapes]
+  [Value Objects]
 }
 
 package "infrastructure" {
   [XmlSvgCodec]
+  [Svg Parser/Serializer]
   [NodeFileStore]
-  [XmlSvgCodec] --> [ShapeFactory]
 }
+
+package "bootstrap" {
+  [CompositionRoot]
+}
+
+[CliApplication] --> [CommandParser]
+[CliApplication] --> [CommandRegistry]
+[CliApplication] --> [CommandProcessor]
+[CliApplication] --> [CliPresenter]
+
+[CommandRegistry] --> [ExecutableCommand]
+[CommandProcessor] --> [CommandInvoker]
+[CommandProcessor] --> [ExecutableCommand]
+[CommandInvoker] --> [PreparedEdit]
+[ExecutableCommand] --> [EditorSession]
+[EditorSession] --> [Document]
+[Query Builders] --> [Document]
+
+[Document] *-- [Shape]
+[Group] --|> [ContainerShape]
+[ContainerShape] --|> [Shape]
+[ContainerShape] o-- [Shape]
+[Leaf Shapes] --|> [Shape]
+[Shape] --> [Value Objects]
 
 [SvgCodec] <|.. [XmlSvgCodec]
 [FileStore] <|.. [NodeFileStore]
+[XmlSvgCodec] --> [Svg Parser/Serializer]
+
+[CliPresenter] --> [Renderer Ports]
+[CLI Renderers] ..|> [Renderer Ports]
+
+[CompositionRoot] --> [CliApplication]
+[CompositionRoot] --> [XmlSvgCodec]
+[CompositionRoot] --> [NodeFileStore]
 @enduml
 ```
 
-## 3. 设计模式与落地
+CompositionRoot 是唯一同时认识所有具体实现的组装位置。
 
-### 3.1 Command 与反向命令
+### 1.4 设计模式与落地
 
-所有编辑操作实现统一接口：
+#### Command + 反向命令
 
 ```typescript
-interface UndoableCommand {
+interface UndoableCommand<TContext> {
   readonly kind: "edit";
-  prepare(context: CommandContext): PreparedEdit;
+  prepare(context: TContext): PreparedEdit<TContext>;
 }
 
-interface PreparedEdit {
-  apply(context: CommandContext): CommandResult;
-  revert(context: CommandContext): CommandResult;
+interface PreparedEdit<TContext> {
+  apply(context: TContext): CommandResult;
+  revert(context: TContext): CommandResult;
 }
 ```
 
-命令由 `CommandProvider` 创建，CLI 不直接修改文档：
+执行流程：
 
 ```text
 CLI -> CommandParser -> CommandRegistry -> CommandProcessor
     -> 编辑命令：CommandInvoker -> prepare -> PreparedEdit.apply
-    -> 文档/查询/控制命令：处理器直接执行
+    -> 文档/查询/控制命令：直接执行
+    -> CommandResult/CommandView -> CliPresenter
 ```
 
-`CommandResult` 包含成功状态、消息和受影响 id，命令本身不直接输出文本。这样后续增加 GUI 或智能体入口时，无需重写应用逻辑。
-
-`CommandInvoker` 只保存已经准备好的 `PreparedEdit`，不保存整份文档快照：
+CommandInvoker 只保存 PreparedEdit：
 
 ```text
-execute：command.prepare() -> edit.apply() -> 压入 undo 栈并清空 redo 栈
-undo：edit.revert() 成功后，将 edit 移入 redo 栈
-redo：edit.apply() 成功后，将 edit 移回 undo 栈
+execute：prepare -> apply -> 入 undo 栈并清空 redo
+undo：revert 成功 -> 移入 redo 栈
+redo：apply 成功 -> 移回 undo 栈
 ```
 
-每条命令保存恢复所需的局部信息：
+反向信息均为局部状态：
 
-| 命令 | 反向恢复信息 |
+| 操作 | 反向信息 |
 |---|---|
-| `create` | 新图形 id；撤销时删除该图形 |
-| `delete` | 被删除子树、原父节点和原索引 |
-| `move` / `scale` | 每个受影响图形修改前的实际几何值 |
-| `set` | 原属性值和新值 |
-| `group` / `ungroup` | 原父节点、索引、成员顺序和组 id |
-| `addto` | 原父节点、原索引、目标容器和目标索引 |
-| `front` / `back` | 原同级顺序或原索引 |
+| create | 新图形、父容器、插入索引 |
+| delete | 被删除子树、原父容器、索引 |
+| move/scale | 受影响图形的 GeometryState |
+| set | 修改前属性值 |
+| group/ungroup | 原父节点、索引、成员顺序、原容器 |
+| addto | 原父节点、原索引、目标容器 |
+| front/back | 原同级索引 |
 
-`scale` 的 undo 恢复记录的原值，而不是只乘 `1/factor`，避免浮点漂移。
+所有编辑命令遵循 `prepare -> apply`：易失败条件在 prepare 阶段检查，apply 只提交已准备好的修改。经验证，操作失败不会写入历史或改变文档。
 
-### 3.2 命令原子性
-
-所有编辑命令遵循 `prepare -> PreparedEdit.apply`：
-
-1. `prepare` 检查 id、容器类型、数值、属性和结构规则。
-2. `prepare` 同时生成包含目标和反向信息的 `PreparedEdit`。
-3. `apply` 完成不会被业务规则拒绝的修改。
-
-例如 `group` 必须在修改结构前检查所有成员存在、没有祖先后代冲突，并生成包含每个成员原父节点和索引的 PreparedEdit。任何准备失败时，文档和历史栈都不改变。
-
-### 3.3 Composite
+#### Composite 与 Document 所有权
 
 ```text
 Shape
 ├── LeafShape：Rect、Circle、Ellipse、Line、Text
-└── Group：children: Shape[]
+└── ContainerShape
+    └── Group
 ```
 
-`Group` 递归执行标准操作，因此命令只面向 `Shape`。Composite 负责结构和递归，Command 负责用户操作及撤销；结构命令通过 `Document` 或 `Group` 的受控方法修改父子关系。
+ContainerShape 统一提供 children、`walkTree`、递归 move/scale、循环检测和局部几何恢复。已挂载容器的 add/insert/remove 会被拒绝，所有结构修改必须经过 Document，以同步父子关系、id 索引、shapeCount 和 attached 状态。
 
-### 3.4 Provider 与 Port
+#### Provider / Factory
 
-- `ShapeProvider.createFromCliArgs()` 只负责把位置参数转换为中立的 `ShapeInit`。
-- `ShapeProvider.create(ShapeInit)` 使用结构化属性创建领域图形，也可供后续 SVG 映射复用。
-- `ShapeDescriptor` 描述图形的类型、id 和展示属性；CLI 或其他入口负责最终排版。
-- `CommandProvider` 提供命令解析、帮助信息和命令创建能力。
-- `SvgCodec` 和 `FileStore` 隔离 XML 与文件系统。
-- 内置类型也在 `bootstrap` 中注册，后续 `box` 插件复用同一路径。
+- `ShapeProvider.createFromCliArgs` 将 CLI 参数转换为中立的 ShapeInit。
+- `ShapeProvider.create(ShapeInit)` 同时服务 CLI 创建和 SVG 读取。
+- ShapeFactory 集中完成类型分派、Provider 调用和公共样式应用。
+- CommandProvider 提供命令名称、usage、解析和命令创建。
+- 内置命令和图形在 CompositionRoot 中使用同一注册路径。
 
-按名字分派仅允许以下两处，均标记为待重构：
+按名字分派只有两处，均标记为待重构：
 
-| 位置 | 分派内容 | 后续方向 |
+| 位置 | 内容 | 后续方向 |
 |---|---|---|
-| `CommandRegistry` | 命令名 → `CommandProvider` | 改为元数据驱动，允许插件注册命令 |
-| `ShapeFactory` | 图形类型名 → `ShapeProvider` | 改为完整插件注册表，支持自定义复合类型 |
+| CommandRegistry | 命令名 → CommandProvider | 插件元数据驱动注册 |
+| ShapeFactory | 图形类型名 → ShapeProvider | 完整插件注册表 |
 
-## 4. 命令分类与历史规则
+#### Port / Adapter 与 Snapshot
 
-| 类别 | 命令 | 历史规则 |
+- SvgCodec 隔离 XML/SVG，XmlSvgCodec 内部拆为 Parser、Serializer、IdAllocator。
+- FileStore 隔离文件系统；NodeFileStore 使用临时文件加 rename 原子保存。
+- tree/show 返回 TreeSnapshot/ShapeDetailsSnapshot；Command 不依赖 CLI Renderer。
+- GUI 或智能体可直接复用 Snapshot，CLI Presenter 可替换。
+
+#### 值对象和错误分类
+
+CanvasSize、Point、Size、ShapeId、ShapeStyle、GeometryState 保证正数、有限坐标、非空 id 和可精确恢复的局部状态。move/scale 先计算完整目标状态，再一次性提交。
+
+UserInputError 和 CommandRejectedError 属于用户可处理错误；CLI 只格式化这些错误，TypeError 等内部故障会保留为程序缺陷。
+
+### 1.5 依赖方向
+
+| 来源 | 可以依赖 | 理由 |
 |---|---|---|
-| 文档命令 | `init`、`read`、`save`、带参 `canvas` | 成功后清空历史，并在下一次编辑命令前禁止 undo/redo |
-| 编辑命令 | `create`、`delete`、`move`、`scale`、`set`、`group`、`ungroup`、`addto`、`front`、`back` | 每个命令对象是一个历史单元 |
-| 显示命令 | `tree`、`show`、`help` | 不进入历史栈 |
+| interfaces/cli | application、shared | CLI 是应用用例的输入输出适配器 |
+| application | domain、自身 ports、shared | 编排领域逻辑，不持有外部实现 |
+| domain | 仅领域内部与 shared 无外设类型 | 核心规则独立、可测试 |
+| infrastructure | application ports、domain | 实现 SVG/文件系统适配器 |
+| bootstrap | 所有模块 | 唯一依赖组装位置 |
 
-`EditorSession` 统一维护当前文档和历史门禁，CLI 不保存这些状态。
+禁止：
 
-## 5. 依赖方向
+- domain 导入 CLI、Infrastructure、Node.js fs 或 XML 库。
+- Command 直接打印或访问具体文件/SVG 实现。
+- CLI 绕过 CommandProcessor 修改 Document。
+- 已挂载 ContainerShape 绕过 Document 修改结构。
+- 多处重复命令名或图形类型分派。
 
-允许的依赖：
+### 1.6 变化点与阶段边界
 
-| 来源 | 可以依赖 |
-|---|---|
-| `interfaces/cli` | `application` |
-| `application` | `domain`、应用层 ports |
-| `infrastructure` | 应用层 ports、`domain` 模型 |
-| `bootstrap` | 所有模块，仅用于组装 |
-
-禁止出现以下依赖：
-
-- `domain` 导入 CLI、XML、Node.js 文件系统或其他外层模块。
-- 命令直接打印输出或读写文件。
-- CLI 绕过 `EditorSession` 修改 `Document`。
-- 图形持有历史栈，或通过全局可变单例取得文档。
-- 在解析器、CLI 和序列化器中重复写图形类型分派。
-
-任何违反规则的依赖都记为待处理项，并记录修订原因。
-
-## 6. 变化点与预留
-
-| 变化点 | 预留方式 | 本阶段决定 |
+| 变化点 | 预留方式 | 当前决定 |
 |---|---|---|
-| 增加图形或 `box` 插件 | `ShapeProvider`、`ShapeFactory`、Composite | 不实现插件加载器，但内置类型走同一注册路径 |
-| 增加命令或输入入口 | `CommandProvider`、`CommandResult`、Presenter 分离 | 不提前引入事件总线 |
-| SVG 元素、transform 或命名空间变化 | `SvgCodec`、`Transform`、SVG 映射器 | 不把任意 XML 节点放入领域模型 |
-| 大文档使反向信息过多 | 命令只保存受影响对象的局部状态 | 先用测试测量，再考虑差异存储 |
-| undo 历史持久化 | 历史层只依赖 `UndoableCommand` | 当前单进程 CLI 不持久化历史 |
-| 外部 SVG 缺 id 或 id 冲突 | `DocumentIndex` 在导入阶段统一处理 | 不在每条命令内重复补 id 和警告 |
+| 新增图形或 box 插件 | ShapeProvider、ShapeFactory、ContainerShape、Descriptor | 不实现插件加载器；接口已备 |
+| 新增命令或输入入口 | CommandProvider、CommandProcessor、CommandView | 不引入事件总线 |
+| GUI/智能体 | 命令结果与 Snapshot 不绑定文本 | CLI Presenter 可替换 |
+| SVG transform/属性扩展 | Codec、Parser、Serializer、ShapeInit | 支持 translate 和等比 scale |
+| 大文档历史增长 | 命令只保存局部状态 | 先测量再优化 |
+| 历史持久化 | 历史层只依赖 PreparedEdit | Phase 1 不持久化 |
 
-## 7. 过程记录
+Phase 1 边界：
 
-1. 最初考虑用 Memento 保存整份 `Document` 快照。由于项目要求反向命令和较高扩展性，最终改为每条命令保存局部恢复信息。
-2. 确认 Composite 只负责结构递归，结构修改仍由 `group`、`ungroup`、`addto` 等命令统一触发，以保证一次操作对应一个 undo 单元。
-3. 为使“可扩展”可以验证，决定内置命令和图形也经过 Provider 注册，而不是只给插件保留未使用的接口。
-4. 将核心 ShapeVisitor 替换为 `ShapeDescriptor`，避免新增插件图形时修改中心接口；同时将 CLI 参数转换从 `ShapeProvider.create()` 中分离。
+- `box` 不实现，`create box` 返回未注册类型错误。
+- transform 在读取时归一化为图形坐标，保存输出规范 SVG。
+- rotate、matrix、非等比 scale 明确拒绝。
+- 不承诺任意外部 SVG 的未知元素和属性完整 round-trip。
 
-## 8. 一致性自查
+## 2. 过程记录
 
-实现后逐项检查，未完成前不得勾选：
+1. 最初考虑整文档 Memento，最终按高扩展性要求改为 PreparedEdit 反向命令。
+2. 发现 CreateShapeCommand 存在隐藏可变准备状态，重构为显式 `prepare -> PreparedEdit`。
+3. E2E 测试发现 `addto` 后图形脱离 Document id 索引，修复为 `detach -> Document.insertShapeAt`。
+4. 为从结构上避免同类问题，引入 attached 状态和 Document 唯一结构修改入口。
+5. 删除中心 ShapeVisitor，改用 ShapeDescriptor、ContainerShape.walkTree 和多态 SVG 属性。
+6. 将 XmlSvgCodec 拆分为 Parser、Serializer、IdAllocator，并将测试从重复编译优化为预构建一次。
+7. 将 tree/show 从文本改为 Snapshot，查询和排版分离。
+8. 根据文档 transcript 修正 create-in、move、tree text、show 和恢复反馈格式。
+9. 加强值对象与不变量，修复 canvas 查询清空历史、未初始化 undo/redo、非原子保存、插件容器 ungroup 和 Text transform 属性问题。
 
-- [ ] 实际目录与本文档一致，差异已记录。
-- [ ] 命令名和图形类型分别只在 `CommandRegistry`、`ShapeFactory` 分派。
-- [ ] `domain` 不依赖 CLI、XML 或文件系统。
-- [ ] CLI 只通过 `EditorSession` 编辑文档。
-- [ ] `Group` 与叶子图形支持相同的标准操作。
-- [ ] 每条编辑命令都有 `prepare -> apply -> revert -> apply` 测试。
-- [ ] 结构命令能恢复原父节点、成员顺序和 z-order。
-- [ ] 失败命令不改变文档和历史栈。
-- [ ] 文档命令后的 undo/redo 门禁符合要求。
+## 3. 一致性自查
 
-一致性抽查至少覆盖 `CreateShapeCommand`、`GroupCommand`、`UngroupCommand`、`DeleteShapeCommand` 以及 CLI 到 `EditorSession` 的调用链。
+### 3.1 模块划分
 
-## 9. 质量保证
+- [x] 实际目录与本文档一致。
+- [x] 修订记录覆盖值对象位置、XmlSvgCodec 拆分、queries 和 errors 模块。
+- [x] 查询、Renderer 和领域模型职责已分离。
+- [x] 已挂载容器结构修改统一经过 Document。
 
-- **领域测试**：id 唯一性、父子关系、递归移动/缩放、属性校验和非法结构。
-- **命令测试**：准备失败不改变状态；所有命令完成 prepare/apply/revert 往返；结构位置准确恢复。
-- **SVG 测试**：元素 round-trip、缺 id 补全、容器嵌套、属性省略语义。
-- **端到端测试**：回放作业中的完整 transcript，检查成功和错误输出。
-- **依赖检查**：用导入检查或 CI 脚本确认领域层未依赖外层模块。
+### 3.2 依赖与分派
 
-关键验收场景包括容器移动与撤销、`group`/`ungroup` 后顺序恢复、删除容器后子树恢复、`front/back` 撤销、缩放无浮点漂移、SVG 保存后在浏览器打开并能正确读回。
+- [x] domain 未导入 CLI、Infrastructure、Node.js fs 或 XML 库。
+- [x] CLI 只通过 CommandRegistry/CommandProcessor 执行命令。
+- [x] 命令名分派只集中于 CommandRegistry。
+- [x] 图形类型分派只集中于 ShapeFactory。
+- [x] SVG Parser 通过 ShapeFactory 创建图形。
+- [x] Command 不依赖 CLI Renderer。
 
-建议按“架构和骨架、领域模型、Command/History、结构命令、CLI、SVG、最终自查”的顺序提交。全部功能、测试和文档完成后，才创建并推送 `final` tag。
+### 3.3 行为
+
+- [x] 支持的编辑操作均使用 PreparedEdit。
+- [x] Group 与叶子图形统一支持标准操作。
+- [x] 结构命令恢复原父节点、成员顺序和 z-order。
+- [x] 失败的结构修改不改变文档或历史。
+- [x] 文档命令清空历史并门禁 undo/redo。
+- [x] 普通 tree/show/help/canvas 查询不属于文档修改。
+- [x] redo 后新编辑清空 redo 栈。
+- [x] 插件复合容器可通过 canUngroup=false 禁止 ungroup。
+
+## 4. 质量保证
+
+截至本文档更新：
+
+```text
+npm test
+Test Files  23 passed
+Tests       87 passed
+
+npm run typecheck
+通过
+
+npm run build
+通过
+```
+
+测试分层：
+
+- 领域值对象、Composite、容器挂载不变量测试。
+- CommandInvoker 异常安全、undo/redo 和 redo 清空测试。
+- 所有编辑命令的 prepare/apply/revert 和结构恢复测试。
+- CLI 参数解析、quoted text、help 和结构化查询测试。
+- SVG Parser/Serializer、IdAllocator、transform、原子文件写入测试。
+- save/read round-trip、缺 id warning 测试。
+- 文档完整 transcript、标准错误矩阵和单场景全功能验收测试。
+
+关键验收能力：
+
+- 六种 Phase 1 图形与 Group 的创建和递归编辑。
+- create-in、group、ungroup、addto、front/back。
+- move/scale/set/delete 的精确 undo/redo。
+- canvas、save、read 和 IO 历史门禁。
+- 嵌套 SVG 保存、读取和结构保持。
+- translate、等比 scale、Text font-size/text-anchor round-trip。
+- 缺 id 自动补全、quoted text 和含空格参数。
+- 用户错误与内部异常分类。
