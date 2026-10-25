@@ -1,21 +1,33 @@
 import type { EditorSession } from "../EditorSession.js";
 import type { CommandProvider } from "../extensions/CommandProvider.js";
 import { CanvasCommand } from "./CanvasCommand.js";
-import type { DocumentCommand } from "./ExecutableCommand.js";
+import { CanvasResizeCommand } from "./CanvasResizeCommand.js";
+import type { ExecutableCommand } from "./ExecutableCommand.js";
 
 export class CanvasCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "canvas";
   readonly usage = "canvas [width] [height]";
 
-  create(args: readonly string[]): DocumentCommand<EditorSession> {
+  create(args: readonly string[]): ExecutableCommand<EditorSession> {
     if (args.length > 2) {
       throw new Error(`usage: ${this.usage}`);
     }
 
-    return new CanvasCommand(
-      this.parseDimension(args[0], "canvas width"),
-      this.parseDimension(args[1], "canvas height")
-    );
+    if (args.length === 0) {
+      return new CanvasCommand();
+    }
+
+    const width = this.parseRequiredDimension(args[0], "canvas width");
+    const height = this.parseDimension(args[1], "canvas height");
+    return new CanvasResizeCommand(width, height);
+  }
+
+  private parseRequiredDimension(value: string | undefined, name: string): number {
+    const dimension = this.parseDimension(value, name);
+    if (dimension === undefined) {
+      throw new Error(`${name} is required`);
+    }
+    return dimension;
   }
 
   private parseDimension(
