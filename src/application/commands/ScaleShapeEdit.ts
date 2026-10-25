@@ -3,6 +3,7 @@ import type { GeometryState } from "../../domain/shapes/GeometryState.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class ScaleShapeEdit implements PreparedEdit<EditorSession> {
   private readonly originalGeometry: GeometryState;
@@ -18,7 +19,7 @@ export class ScaleShapeEdit implements PreparedEdit<EditorSession> {
     this.shape.scale(this.factor);
     return {
       success: true,
-      message: `${this.shape.id} scaled by ${this.factor}`,
+      message: ShapeFeedback.scaled(this.shape, this.factor),
       affectedIds: [this.shape.id]
     };
   }
@@ -27,7 +28,7 @@ export class ScaleShapeEdit implements PreparedEdit<EditorSession> {
     this.originalGeometry.restore();
     return {
       success: true,
-      message: `${this.shape.id} scale reverted`,
+      message: `${ShapeFeedback.reference(this.shape)} scale reverted`,
       affectedIds: [this.shape.id]
     };
   }

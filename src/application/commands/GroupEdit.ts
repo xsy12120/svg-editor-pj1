@@ -5,6 +5,7 @@ import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 interface PlacedShape {
   readonly shape: Shape;
@@ -12,7 +13,7 @@ interface PlacedShape {
 }
 
 export class GroupEdit implements PreparedEdit<EditorSession> {
-  private activeGroupId: string | null = null;
+  private activeGroup: Group | null = null;
 
   constructor(
     private readonly groupId: string,
@@ -30,33 +31,34 @@ export class GroupEdit implements PreparedEdit<EditorSession> {
       group.addChild(shape);
     }
     document.addShape(group);
-    this.activeGroupId = group.id;
+    this.activeGroup = group;
 
     return {
       success: true,
-      message: `g#${group.id} created with ${this.members.length} children`,
+      message: ShapeFeedback.grouped(group, this.members.length),
       affectedIds: [group.id, ...this.members.map(({ shape }) => shape.id)]
     };
   }
 
   revert(session: EditorSession): CommandResult {
     const document = requireDocument(session);
-    if (this.activeGroupId === null) {
+    if (this.activeGroup === null) {
       throw new Error("group edit has not been applied");
     }
 
-    document.detachShape(this.activeGroupId);
+    const group = this.activeGroup;
+    document.detachShape(group.id);
     const placements = [...this.members].sort(
       (left, right) => left.placement.index - right.placement.index
     );
     for (const { shape, placement } of placements) {
       document.insertShapeAt(shape, placement.parent, placement.index);
     }
-    this.activeGroupId = null;
+    this.activeGroup = null;
 
     return {
       success: true,
-      message: `g#${this.groupId} ungrouped`,
+      message: ShapeFeedback.ungrouped(group),
       affectedIds: this.members.map(({ shape }) => shape.id)
     };
   }

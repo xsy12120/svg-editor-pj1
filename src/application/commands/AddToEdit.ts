@@ -5,6 +5,7 @@ import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class AddToEdit implements PreparedEdit<EditorSession> {
   constructor(
@@ -22,7 +23,7 @@ export class AddToEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} added to g#${this.target.id}`,
+      message: ShapeFeedback.addedTo(this.shape, this.target),
       affectedIds: [this.shape.id, this.target.id]
     };
   }
@@ -40,7 +41,10 @@ export class AddToEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} restored`,
+      message: ShapeFeedback.restoredInto(
+        this.shape,
+        this.originalPlacement.parent
+      ),
       affectedIds: [this.shape.id]
     };
   }

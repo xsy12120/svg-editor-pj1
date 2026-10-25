@@ -3,6 +3,7 @@ import type { GeometryState } from "../../domain/shapes/GeometryState.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class MoveShapeEdit implements PreparedEdit<EditorSession> {
   private readonly originalGeometry: GeometryState;
@@ -17,14 +18,9 @@ export class MoveShapeEdit implements PreparedEdit<EditorSession> {
 
   apply(): CommandResult {
     this.shape.move(this.dx, this.dy);
-    const descriptor = this.shape.toDescriptor();
-    const location =
-      this.shape.anchor === undefined
-        ? `moved by (${this.dx},${this.dy})`
-        : `moved to (${this.shape.anchor.x},${this.shape.anchor.y})`;
     return {
       success: true,
-      message: `${descriptor.typeName}#${this.shape.id} ${location}`,
+      message: ShapeFeedback.moved(this.shape, this.dx, this.dy),
       affectedIds: [this.shape.id]
     };
   }
@@ -33,7 +29,7 @@ export class MoveShapeEdit implements PreparedEdit<EditorSession> {
     this.originalGeometry.restore();
     return {
       success: true,
-      message: `${this.shape.id} move reverted`,
+      message: ShapeFeedback.movedBack(this.shape, this.dx, this.dy),
       affectedIds: [this.shape.id]
     };
   }

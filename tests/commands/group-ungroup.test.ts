@@ -28,7 +28,10 @@ describe("group and ungroup commands", () => {
     session.document?.addShape(r1);
     session.document?.addShape(r2);
 
-    invoker.execute(new GroupCommand("cluster", ["r2", "r1"]));
+    const result = invoker.execute(
+      new GroupCommand("cluster", ["r2", "r1"])
+    );
+    expect(result.message).toBe("g#cluster created with 2 children");
 
     const cluster = session.document?.findShape("cluster");
     expect(cluster).toBeInstanceOf(Group);
@@ -50,7 +53,8 @@ describe("group and ungroup commands", () => {
     session.document?.addShape(after);
 
     invoker.execute(new GroupCommand("cluster", ["first"]));
-    invoker.undo();
+    const undoResult = invoker.undo();
+    expect(undoResult.message).toBe("g#cluster ungrouped");
 
     expect(session.document?.shapes.map((shape) => shape.id)).toEqual([
       "before",
@@ -83,12 +87,14 @@ describe("group and ungroup commands", () => {
     root.addChild(nested);
     session.document?.addShape(root);
 
-    invoker.execute(new UngroupCommand("nested"));
+    const result = invoker.execute(new UngroupCommand("nested"));
+    expect(result.message).toBe("g#nested ungrouped");
 
     expect(root.children.map((shape) => shape.id)).toEqual(["r1", "r2"]);
     expect(session.document?.findShape("nested")).toBeUndefined();
 
-    invoker.undo();
+    const undoResult = invoker.undo();
+    expect(undoResult.message).toBe("g#nested restored");
     const restored = root.children[0];
     expect(restored).toBeInstanceOf(Group);
     expect((restored as Group).children.map((shape) => shape.id)).toEqual([

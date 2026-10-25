@@ -56,7 +56,8 @@ describe("basic editing commands", () => {
     expect(result.message).toBe("rect#r1 moved to (20,40)");
     expect([shape.x, shape.y]).toEqual([20, 40]);
 
-    harness.invoker.undo();
+    const undoResult = harness.invoker.undo();
+    expect(undoResult.message).toBe("rect#r1 moved back to (10,20)");
     expect([shape.x, shape.y]).toEqual([10, 20]);
 
     harness.invoker.redo();
@@ -67,7 +68,8 @@ describe("basic editing commands", () => {
     const harness = createHarness();
     const shape = addRect(harness);
 
-    harness.invoker.execute(new ScaleShapeCommand("r1", 2));
+    const result = harness.invoker.execute(new ScaleShapeCommand("r1", 2));
+    expect(result.message).toBe("rect#r1 scaled by 2");
     expect([shape.x, shape.y, shape.width, shape.height]).toEqual([
       20,
       40,
@@ -109,10 +111,14 @@ describe("basic editing commands", () => {
     const harness = createHarness();
     const shape = addRect(harness);
 
-    harness.invoker.execute(new SetAttributeCommand("r1", "fill", "blue"));
+    const result = harness.invoker.execute(
+      new SetAttributeCommand("r1", "fill", "blue")
+    );
+    expect(result.message).toBe('rect#r1 updated: fill="blue"');
     expect(shape.fill).toBe("blue");
 
-    harness.invoker.undo();
+    const undoResult = harness.invoker.undo();
+    expect(undoResult.message).toBe('rect#r1 updated: fill="#f00"');
     expect(shape.fill).toBe("#f00");
 
     harness.invoker.redo();
@@ -123,10 +129,12 @@ describe("basic editing commands", () => {
     const harness = createHarness();
     const shape = addRect(harness);
 
-    harness.invoker.execute(new DeleteShapeCommand("r1"));
+    const result = harness.invoker.execute(new DeleteShapeCommand("r1"));
+    expect(result.message).toBe("rect#r1 deleted");
     expect(harness.session.document?.findShape("r1")).toBeUndefined();
 
-    harness.invoker.undo();
+    const undoResult = harness.invoker.undo();
+    expect(undoResult.message).toBe("rect#r1 restored");
     expect(harness.session.document?.findShape("r1")).toBe(shape);
 
     harness.invoker.redo();

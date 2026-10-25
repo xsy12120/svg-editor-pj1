@@ -3,10 +3,10 @@ import type { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class CreateShapeEdit implements PreparedEdit<EditorSession> {
   constructor(
-    private readonly typeName: string,
     private readonly shape: Shape,
     private readonly parent: ContainerShape | null,
     private readonly index: number
@@ -19,14 +19,10 @@ export class CreateShapeEdit implements PreparedEdit<EditorSession> {
     }
 
     document.insertShapeAt(this.shape, this.parent, this.index);
-    const location =
-      this.parent === null
-        ? ""
-        : ` in ${this.parent.svgTagName}#${this.parent.id}`;
 
     return {
       success: true,
-      message: `${this.typeName}#${this.shape.id} created${location}`,
+      message: ShapeFeedback.created(this.shape, this.parent),
       affectedIds: [this.shape.id]
     };
   }
@@ -39,7 +35,7 @@ export class CreateShapeEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.typeName}#${this.shape.id} deleted`,
+      message: ShapeFeedback.deleted(this.shape),
       affectedIds: [this.shape.id]
     };
   }

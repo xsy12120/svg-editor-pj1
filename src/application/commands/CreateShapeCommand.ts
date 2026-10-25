@@ -42,7 +42,6 @@ export class CreateShapeCommand implements UndoableCommand<EditorSession> {
     }
 
     return new CreateShapeEdit(
-      this.typeName,
       shape,
       parent,
       parent?.children.length ?? document.shapes.length

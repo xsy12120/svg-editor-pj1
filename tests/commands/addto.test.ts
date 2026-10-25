@@ -22,7 +22,8 @@ describe("addto command", () => {
     session.document?.addShape(group);
     session.document?.addShape(moved);
 
-    invoker.execute(new AddToCommand("g1", "moved"));
+    const result = invoker.execute(new AddToCommand("g1", "moved"));
+    expect(result.message).toBe("rect#moved added to g#g1");
 
     expect(group.children.map((shape) => shape.id)).toEqual([
       "first",
@@ -45,7 +46,8 @@ describe("addto command", () => {
     session.document?.addShape(group);
 
     invoker.execute(new AddToCommand("g1", "moved"));
-    invoker.undo();
+    const undoResult = invoker.undo();
+    expect(undoResult.message).toBe("rect#moved restored");
 
     expect(session.document?.shapes.map((shape) => shape.id)).toEqual([
       "before",

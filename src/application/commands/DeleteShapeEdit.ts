@@ -4,6 +4,7 @@ import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class DeleteShapeEdit implements PreparedEdit<EditorSession> {
   constructor(
@@ -19,7 +20,7 @@ export class DeleteShapeEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} deleted`,
+      message: ShapeFeedback.deleted(this.shape),
       affectedIds: [this.shape.id]
     };
   }
@@ -33,7 +34,10 @@ export class DeleteShapeEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} restored`,
+      message: ShapeFeedback.restoredInto(
+        this.shape,
+        this.placement.parent
+      ),
       affectedIds: [this.shape.id]
     };
   }

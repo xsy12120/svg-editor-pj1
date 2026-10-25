@@ -4,6 +4,7 @@ import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export type ZOrderDirection = "front" | "back";
 
@@ -30,7 +31,7 @@ export class ZOrderEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} moved to ${this.direction}`,
+      message: ShapeFeedback.placed(this.shape, this.direction),
       affectedIds: [this.shape.id]
     };
   }
@@ -46,7 +47,7 @@ export class ZOrderEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `${this.shape.id} z-order restored`,
+      message: `${ShapeFeedback.reference(this.shape)} z-order restored`,
       affectedIds: [this.shape.id]
     };
   }

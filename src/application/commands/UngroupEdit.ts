@@ -5,6 +5,7 @@ import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class UngroupEdit implements PreparedEdit<EditorSession> {
   private activeContainer: ContainerShape | null = null;
@@ -34,7 +35,7 @@ export class UngroupEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `g#${this.groupId} ungrouped`,
+      message: ShapeFeedback.ungrouped(container),
       affectedIds: [this.groupId, ...this.children.map((child) => child.id)]
     };
   }
@@ -44,12 +45,13 @@ export class UngroupEdit implements PreparedEdit<EditorSession> {
     if (this.activeContainer === null) {
       throw new Error("ungroup edit has not been applied");
     }
+    const container = this.activeContainer;
 
     for (const child of this.children) {
       document.detachShape(child.id);
     }
     document.insertShapeAt(
-      this.activeContainer,
+      container,
       this.placement.parent,
       this.placement.index
     );
@@ -57,7 +59,7 @@ export class UngroupEdit implements PreparedEdit<EditorSession> {
 
     return {
       success: true,
-      message: `g#${this.groupId} restored`,
+      message: ShapeFeedback.restored(container),
       affectedIds: [this.groupId, ...this.children.map((child) => child.id)]
     };
   }

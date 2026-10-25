@@ -2,6 +2,7 @@ import type { EditorSession } from "../EditorSession.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
+import { ShapeFeedback } from "./ShapeFeedback.js";
 
 export class SetAttributeEdit implements PreparedEdit<EditorSession> {
   constructor(
@@ -15,7 +16,11 @@ export class SetAttributeEdit implements PreparedEdit<EditorSession> {
     this.shape.setAttribute(this.name, this.value);
     return {
       success: true,
-      message: `${this.shape.id} ${this.name} set to ${this.value}`,
+      message: ShapeFeedback.attributeUpdated(
+        this.shape,
+        this.name,
+        this.value
+      ),
       affectedIds: [this.shape.id]
     };
   }
@@ -24,7 +29,11 @@ export class SetAttributeEdit implements PreparedEdit<EditorSession> {
     this.shape.setAttribute(this.name, this.previousValue);
     return {
       success: true,
-      message: `${this.shape.id} ${this.name} restored`,
+      message: ShapeFeedback.attributeUpdated(
+        this.shape,
+        this.name,
+        this.previousValue
+      ),
       affectedIds: [this.shape.id]
     };
   }
