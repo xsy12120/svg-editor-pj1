@@ -1,7 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 
+import type { ShapeCreator } from "../../application/ports/ShapeCreator.js";
 import type { ParsedSvgDocument } from "../../application/ports/SvgCodec.js";
-import type { ShapeFactory } from "../../application/shapes/ShapeFactory.js";
 import { Document } from "../../domain/model/Document.js";
 import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
@@ -18,7 +18,7 @@ export class SvgDocumentParser {
     trimValues: false
   });
 
-  constructor(private readonly shapeFactory: ShapeFactory) {}
+  constructor(private readonly shapeFactory: ShapeCreator) {}
 
   parse(content: string): ParsedSvgDocument {
     const parsed: unknown = this.parser.parse(content);

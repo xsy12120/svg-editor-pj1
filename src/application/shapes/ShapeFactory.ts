@@ -1,8 +1,9 @@
 import type { Shape } from "../../domain/shapes/Shape.js";
+import type { ShapeCreator } from "../ports/ShapeCreator.js";
 import type { ShapeProvider } from "./ShapeProvider.js";
 import type { ShapeInit } from "./ShapeInit.js";
 
-export class ShapeFactory {
+export class ShapeFactory implements ShapeCreator {
   private readonly providers = new Map<string, ShapeProvider>();
 
   register(provider: ShapeProvider): void {

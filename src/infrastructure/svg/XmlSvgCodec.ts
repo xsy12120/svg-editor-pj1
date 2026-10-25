@@ -1,8 +1,8 @@
+import type { ShapeCreator } from "../../application/ports/ShapeCreator.js";
 import type {
   ParsedSvgDocument,
   SvgCodec
 } from "../../application/ports/SvgCodec.js";
-import type { ShapeFactory } from "../../application/shapes/ShapeFactory.js";
 import type { Document } from "../../domain/model/Document.js";
 import { SvgDocumentParser } from "./SvgDocumentParser.js";
 import { SvgDocumentSerializer } from "./SvgDocumentSerializer.js";
@@ -11,7 +11,7 @@ export class XmlSvgCodec implements SvgCodec {
   private readonly parser: SvgDocumentParser;
   private readonly serializer: SvgDocumentSerializer;
 
-  constructor(shapeFactory: ShapeFactory) {
+  constructor(shapeFactory: ShapeCreator) {
     this.parser = new SvgDocumentParser(shapeFactory);
     this.serializer = new SvgDocumentSerializer();
   }
