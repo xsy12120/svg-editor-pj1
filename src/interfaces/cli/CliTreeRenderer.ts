@@ -43,6 +43,28 @@ export class CliTreeRenderer implements DocumentTreeRenderer {
   }
 
   private formatNode(node: TreeSnapshotNode): string {
+    const text = node.attributes.find((attribute) => attribute.name === "text");
+    const x = node.attributes.find((attribute) => attribute.name === "x");
+    const y = node.attributes.find((attribute) => attribute.name === "y");
+    if (
+      node.typeName === "text" &&
+      text !== undefined &&
+      x !== undefined &&
+      y !== undefined
+    ) {
+      const style = node.attributes
+        .filter(
+          (attribute) =>
+            attribute.name !== "text" &&
+            attribute.name !== "x" &&
+            attribute.name !== "y"
+        )
+        .map((attribute) => `${attribute.name}=${attribute.value}`)
+        .join(" ");
+      const suffix = style.length === 0 ? "" : ` ${style}`;
+      return `${node.typeName}#${node.id} (${x.value},${y.value}) "${text.value}"${suffix}`;
+    }
+
     const attributes = node.attributes
       .map((attribute) => `${attribute.name}=${attribute.value}`)
       .join(" ");

@@ -19,10 +19,14 @@ export class CreateShapeEdit implements PreparedEdit<EditorSession> {
     }
 
     document.insertShapeAt(this.shape, this.parent, this.index);
+    const location =
+      this.parent === null
+        ? ""
+        : ` in ${this.parent.svgTagName}#${this.parent.id}`;
 
     return {
       success: true,
-      message: `${this.typeName}#${this.shape.id} created`,
+      message: `${this.typeName}#${this.shape.id} created${location}`,
       affectedIds: [this.shape.id]
     };
   }

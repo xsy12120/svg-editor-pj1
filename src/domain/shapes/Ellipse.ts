@@ -22,6 +22,10 @@ export class Ellipse extends Shape {
     this.radii = new Size(init.rx, init.ry);
   }
 
+  override get anchor(): Point {
+    return this.center;
+  }
+
   override move(dx: number, dy: number): void {
     this.center = this.center.translate(dx, dy);
   }

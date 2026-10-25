@@ -17,9 +17,14 @@ export class MoveShapeEdit implements PreparedEdit<EditorSession> {
 
   apply(): CommandResult {
     this.shape.move(this.dx, this.dy);
+    const descriptor = this.shape.toDescriptor();
+    const location =
+      this.shape.anchor === undefined
+        ? `moved by (${this.dx},${this.dy})`
+        : `moved to (${this.shape.anchor.x},${this.shape.anchor.y})`;
     return {
       success: true,
-      message: `${this.shape.id} moved by (${this.dx},${this.dy})`,
+      message: `${descriptor.typeName}#${this.shape.id} ${location}`,
       affectedIds: [this.shape.id]
     };
   }

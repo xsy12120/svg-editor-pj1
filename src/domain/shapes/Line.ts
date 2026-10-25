@@ -21,6 +21,10 @@ export class Line extends Shape {
     this.end = new Point(init.x2, init.y2);
   }
 
+  override get anchor(): Point {
+    return this.start;
+  }
+
   override move(dx: number, dy: number): void {
     this.start = this.start.translate(dx, dy);
     this.end = this.end.translate(dx, dy);

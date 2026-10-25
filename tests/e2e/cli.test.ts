@@ -42,12 +42,16 @@ describe("CLI", () => {
       [
         "init",
         'create text title 20 40 "My Diagram"',
+        "tree",
         "show title"
       ].join("\n")
     );
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("text#title created");
+    expect(result.stdout).toContain(
+      'text#title (20,40) "My Diagram"'
+    );
     expect(result.stdout).toContain("text=My Diagram");
   });
 
@@ -114,7 +118,7 @@ describe("CLI", () => {
     );
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("circle#c1 parent=g#node1");
+    expect(result.stdout).toContain("circle#c1  parent=g#node1");
     expect(result.stdout).toContain("cx=10 cy=20 r=5");
     expect(result.stdout).toContain("fill=red");
   });

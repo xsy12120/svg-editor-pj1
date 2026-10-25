@@ -14,7 +14,7 @@ export class CliShapeDetailsRenderer implements ShapeDetailsRenderer {
     );
 
     const lines = [
-      `${snapshot.typeName}#${snapshot.id} parent=${this.formatParent(snapshot.parent)}`
+      `${snapshot.typeName}#${snapshot.id}  parent=${this.formatParent(snapshot.parent)}`
     ];
     if (geometry.length > 0) {
       lines.push(`  ${this.formatAttributes(geometry)}`);

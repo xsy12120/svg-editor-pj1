@@ -1,4 +1,5 @@
 import type { GeometryState } from "./GeometryState.js";
+import type { Point } from "./Point.js";
 import type {
   ShapeAttribute,
   ShapeDescriptor
@@ -24,6 +25,10 @@ export abstract class Shape {
 
   get stroke(): string | undefined {
     return this.style.get("stroke");
+  }
+
+  get anchor(): Point | undefined {
+    return undefined;
   }
 
   abstract get svgTagName(): string;

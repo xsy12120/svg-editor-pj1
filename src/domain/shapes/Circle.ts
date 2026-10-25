@@ -35,6 +35,10 @@ export class Circle extends Shape {
     return this.radius;
   }
 
+  override get anchor(): Point {
+    return this.center;
+  }
+
   override move(dx: number, dy: number): void {
     this.center = this.center.translate(dx, dy);
   }

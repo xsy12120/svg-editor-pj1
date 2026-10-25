@@ -19,13 +19,14 @@ describe("create in container", () => {
     shapes.register(new RectProvider());
 
     invoker.execute(new CreateShapeCommand(shapes, "g", ["node1"]));
-    invoker.execute(
+    const result = invoker.execute(
       new CreateShapeCommand(
         shapes,
         "rect",
         ["start", "10", "20", "100", "50", "#f00", "in", "node1"]
       )
     );
+    expect(result.message).toBe("rect#start created in g#node1");
 
     const group = session.document?.findShape("node1");
     const rectangle = session.document?.findShape("start");

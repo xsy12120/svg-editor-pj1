@@ -20,6 +20,10 @@ export class Text extends Shape {
     this.textContent = init.content;
   }
 
+  override get anchor(): Point {
+    return this.position;
+  }
+
   override move(dx: number, dy: number): void {
     this.position = this.position.translate(dx, dy);
   }

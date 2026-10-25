@@ -52,7 +52,8 @@ describe("basic editing commands", () => {
     const harness = createHarness();
     const shape = addRect(harness);
 
-    harness.invoker.execute(new MoveShapeCommand("r1", 10, 20));
+    const result = harness.invoker.execute(new MoveShapeCommand("r1", 10, 20));
+    expect(result.message).toBe("rect#r1 moved to (20,40)");
     expect([shape.x, shape.y]).toEqual([20, 40]);
 
     harness.invoker.undo();
@@ -145,7 +146,8 @@ describe("basic editing commands", () => {
     group.addChild(child);
     harness.session.document?.addShape(group);
 
-    harness.invoker.execute(new MoveShapeCommand("g1", 5, 15));
+    const result = harness.invoker.execute(new MoveShapeCommand("g1", 5, 15));
+    expect(result.message).toBe("g#g1 moved by (5,15)");
     expect([child.x, child.y]).toEqual([15, 35]);
 
     harness.invoker.undo();
