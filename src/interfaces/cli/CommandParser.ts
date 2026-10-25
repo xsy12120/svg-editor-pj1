@@ -10,11 +10,71 @@ export class CommandParser {
       return null;
     }
 
-    const [name, ...args] = trimmed.split(/\s+/);
+    const [name, ...args] = this.tokenize(trimmed);
     if (name === undefined) {
       return null;
     }
 
     return { name, args };
+  }
+
+  private tokenize(line: string): string[] {
+    const tokens: string[] = [];
+    let current = "";
+    let tokenStarted = false;
+    let inQuotes = false;
+    let escaped = false;
+
+    for (const character of line) {
+      if (inQuotes) {
+        if (escaped) {
+          if (character !== '"' && character !== "\\") {
+            current += "\\";
+          }
+          current += character;
+          escaped = false;
+          tokenStarted = true;
+          continue;
+        }
+        if (character === "\\") {
+          escaped = true;
+          continue;
+        }
+        if (character === '"') {
+          inQuotes = false;
+          tokenStarted = true;
+          continue;
+        }
+
+        current += character;
+        tokenStarted = true;
+        continue;
+      }
+
+      if (character === '"') {
+        inQuotes = true;
+        tokenStarted = true;
+        continue;
+      }
+      if (/\s/.test(character)) {
+        if (tokenStarted) {
+          tokens.push(current);
+          current = "";
+          tokenStarted = false;
+        }
+        continue;
+      }
+
+      current += character;
+      tokenStarted = true;
+    }
+
+    if (inQuotes) {
+      throw new Error("unterminated quoted argument");
+    }
+    if (tokenStarted) {
+      tokens.push(current);
+    }
+    return tokens;
   }
 }

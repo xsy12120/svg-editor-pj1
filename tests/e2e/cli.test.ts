@@ -37,6 +37,20 @@ describe("CLI", () => {
     );
   });
 
+  it("creates text whose content contains spaces", async () => {
+    const result = await runCli(
+      [
+        "init",
+        'create text title 20 40 "My Diagram"',
+        "show title"
+      ].join("\n")
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("text#title created");
+    expect(result.stdout).toContain("text=My Diagram");
+  });
+
   it("undoes and redoes a created rectangle", async () => {
     const result = await runCli(
       [
