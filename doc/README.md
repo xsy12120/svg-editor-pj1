@@ -181,11 +181,12 @@ Shape
 
 ### 3.4 Provider 与 Port
 
-- `ShapeProvider` 根据类型创建领域图形；SVG 的标签和属性先由基础设施映射成不含 XML 类型的初始化参数。
+- `ShapeProvider.createFromCliArgs()` 只负责把位置参数转换为中立的 `ShapeInit`。
+- `ShapeProvider.create(ShapeInit)` 使用结构化属性创建领域图形，也可供后续 SVG 映射复用。
+- `ShapeDescriptor` 描述图形的类型、id 和展示属性；CLI 或其他入口负责最终排版。
 - `CommandProvider` 提供命令解析、帮助信息和命令创建能力。
 - `SvgCodec` 和 `FileStore` 隔离 XML 与文件系统。
 - 内置类型也在 `bootstrap` 中注册，后续 `box` 插件复用同一路径。
-- `ShapeVisitor` 负责与图形类型相关的输出，目前用于 `tree` 格式化，避免在展示层散落图形类型判断。
 
 按名字分派仅允许以下两处，均标记为待重构：
 
@@ -241,6 +242,7 @@ Shape
 1. 最初考虑用 Memento 保存整份 `Document` 快照。由于项目要求反向命令和较高扩展性，最终改为每条命令保存局部恢复信息。
 2. 确认 Composite 只负责结构递归，结构修改仍由 `group`、`ungroup`、`addto` 等命令统一触发，以保证一次操作对应一个 undo 单元。
 3. 为使“可扩展”可以验证，决定内置命令和图形也经过 Provider 注册，而不是只给插件保留未使用的接口。
+4. 将核心 ShapeVisitor 替换为 `ShapeDescriptor`，避免新增插件图形时修改中心接口；同时将 CLI 参数转换从 `ShapeProvider.create()` 中分离。
 
 ## 8. 一致性自查
 

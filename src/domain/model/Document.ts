@@ -1,5 +1,6 @@
 import type { Shape } from "../shapes/Shape.js";
 import { Group } from "../shapes/Group.js";
+import type { ShapePlacement } from "./ShapePlacement.js";
 
 export class Document {
   private readonly shapeList: Shape[] = [];
@@ -31,6 +32,51 @@ export class Document {
   }
 
   addShape(shape: Shape): void {
+    this.insertShapeAt(shape, null, this.shapeList.length);
+  }
+
+  findPlacement(id: string): ShapePlacement | undefined {
+    const rootIndex = this.shapeList.findIndex((shape) => shape.id === id);
+    if (rootIndex >= 0) {
+      return { parent: null, index: rootIndex };
+    }
+
+    for (const root of this.shapeList) {
+      if (root instanceof Group) {
+        const placement = findPlacementInGroup(root, id);
+        if (placement !== undefined) {
+          return placement;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  detachShape(id: string): Shape | undefined {
+    const placement = this.findPlacement(id);
+    if (placement === undefined) {
+      return undefined;
+    }
+
+    const shape =
+      placement.parent === null
+        ? this.shapeList.splice(placement.index, 1)[0]
+        : placement.parent.removeChild(id);
+    if (shape === undefined) {
+      return undefined;
+    }
+
+    for (const descendant of collectShapeTree(shape)) {
+      this.shapesById.delete(descendant.id);
+    }
+    return shape;
+  }
+
+  insertShapeAt(
+    shape: Shape,
+    parent: Group | null,
+    index: number
+  ): void {
     const subtree = [...collectShapeTree(shape)];
     const newIds = new Set<string>();
     for (const descendant of subtree) {
@@ -40,39 +86,29 @@ export class Document {
       newIds.add(descendant.id);
     }
 
-    this.shapeList.push(shape);
+    if (parent === null) {
+      if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index > this.shapeList.length
+      ) {
+        throw new Error(`invalid shape index: ${index}`);
+      }
+      this.shapeList.splice(index, 0, shape);
+    } else {
+      if (!this.hasShape(parent.id)) {
+        throw new Error(`no such container: ${parent.id}`);
+      }
+      parent.insertChildAt(shape, index);
+    }
+
     for (const descendant of subtree) {
       this.shapesById.set(descendant.id, descendant);
     }
   }
 
   removeShape(id: string): Shape | undefined {
-    const root = this.shapeList.find(
-      (shape) =>
-        shape.id === id || (shape instanceof Group && shape.containsById(id))
-    );
-    if (root === undefined) {
-      return undefined;
-    }
-
-    const removed =
-      root.id === id
-        ? root
-        : root instanceof Group
-          ? root.removeChild(id)
-          : undefined;
-    if (removed === undefined) {
-      return undefined;
-    }
-
-    if (root.id === id) {
-      const index = this.shapeList.indexOf(root);
-      this.shapeList.splice(index, 1);
-    }
-    for (const descendant of collectShapeTree(removed)) {
-      this.shapesById.delete(descendant.id);
-    }
-    return removed;
+    return this.detachShape(id);
   }
 }
 
@@ -83,4 +119,26 @@ function* collectShapeTree(shape: Shape): Generator<Shape> {
       yield* collectShapeTree(child);
     }
   }
+}
+
+function findPlacementInGroup(
+  group: Group,
+  id: string
+): ShapePlacement | undefined {
+  for (let index = 0; index < group.children.length; index += 1) {
+    const child = group.children[index];
+    if (child === undefined) {
+      continue;
+    }
+    if (child.id === id) {
+      return { parent: group, index };
+    }
+    if (child instanceof Group) {
+      const nested = findPlacementInGroup(child, id);
+      if (nested !== undefined) {
+        return nested;
+      }
+    }
+  }
+  return undefined;
 }

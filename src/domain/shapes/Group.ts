@@ -1,4 +1,6 @@
 import { Shape } from "./Shape.js";
+import type { GeometryState } from "./GeometryState.js";
+import type { ShapeAttribute } from "./ShapeDescriptor.js";
 import type { ShapeDescriptor } from "./ShapeDescriptor.js";
 
 export class Group extends Shape {
@@ -13,6 +15,10 @@ export class Group extends Shape {
   }
 
   addChild(shape: Shape): void {
+    this.insertChildAt(shape, this.childShapes.length);
+  }
+
+  insertChildAt(shape: Shape, index: number): void {
     if (shape === this || (shape instanceof Group && shape.contains(this))) {
       throw new Error(
         `cannot group a container into its own descendant: ${shape.id}`
@@ -29,7 +35,14 @@ export class Group extends Shape {
       addedIds.add(id);
     }
 
-    this.childShapes.push(shape);
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index > this.childShapes.length
+    ) {
+      throw new Error(`invalid child index: ${index}`);
+    }
+    this.childShapes.splice(index, 0, shape);
   }
 
   contains(shape: Shape): boolean {
@@ -80,11 +93,41 @@ export class Group extends Shape {
     }
   }
 
+  override captureGeometryState(): GeometryState {
+    const childStates = this.childShapes.map((child) =>
+      child.captureGeometryState()
+    );
+
+    return {
+      restore: (): void => {
+        for (const state of childStates) {
+          state.restore();
+        }
+      }
+    };
+  }
+
+  override getAttribute(name: string): string | undefined {
+    if (this.isStyleAttribute(name)) {
+      return this.getStyleAttribute(name);
+    }
+    throw new Error(`unknown attribute: ${name}`);
+  }
+
+  override setAttribute(name: string, value: string | undefined): void {
+    if (!this.setStyleAttribute(name, value)) {
+      throw new Error(`unknown attribute: ${name}`);
+    }
+  }
+
   override toDescriptor(): ShapeDescriptor {
+    const attributes: ShapeAttribute[] = [];
+    this.appendStyleAttributes(attributes);
+
     return {
       typeName: "g",
       id: this.id,
-      attributes: []
+      attributes
     };
   }
 }
