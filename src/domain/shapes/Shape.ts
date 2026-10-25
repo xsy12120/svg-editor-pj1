@@ -7,5 +7,7 @@ export abstract class Shape {
     return this.shapeId;
   }
 
+  abstract move(dx: number, dy: number): void;
+  abstract scale(factor: number): void;
   abstract toDescriptor(): ShapeDescriptor;
 }

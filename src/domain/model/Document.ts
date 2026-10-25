@@ -1,4 +1,5 @@
 import type { Shape } from "../shapes/Shape.js";
+import { Group } from "../shapes/Group.js";
 
 export class Document {
   private readonly shapeList: Shape[] = [];
@@ -30,25 +31,56 @@ export class Document {
   }
 
   addShape(shape: Shape): void {
-    if (this.shapesById.has(shape.id)) {
-      throw new Error(`id already exists: ${shape.id}`);
+    const subtree = [...collectShapeTree(shape)];
+    const newIds = new Set<string>();
+    for (const descendant of subtree) {
+      if (this.shapesById.has(descendant.id) || newIds.has(descendant.id)) {
+        throw new Error(`id already exists: ${descendant.id}`);
+      }
+      newIds.add(descendant.id);
     }
 
     this.shapeList.push(shape);
-    this.shapesById.set(shape.id, shape);
+    for (const descendant of subtree) {
+      this.shapesById.set(descendant.id, descendant);
+    }
   }
 
   removeShape(id: string): Shape | undefined {
-    const shape = this.shapesById.get(id);
-    if (shape === undefined) {
+    const root = this.shapeList.find(
+      (shape) =>
+        shape.id === id || (shape instanceof Group && shape.containsById(id))
+    );
+    if (root === undefined) {
       return undefined;
     }
 
-    const index = this.shapeList.indexOf(shape);
-    if (index >= 0) {
+    const removed =
+      root.id === id
+        ? root
+        : root instanceof Group
+          ? root.removeChild(id)
+          : undefined;
+    if (removed === undefined) {
+      return undefined;
+    }
+
+    if (root.id === id) {
+      const index = this.shapeList.indexOf(root);
       this.shapeList.splice(index, 1);
     }
-    this.shapesById.delete(id);
-    return shape;
+    for (const descendant of collectShapeTree(removed)) {
+      this.shapesById.delete(descendant.id);
+    }
+    return removed;
+  }
+}
+
+function* collectShapeTree(shape: Shape): Generator<Shape> {
+  yield shape;
+  if (shape instanceof Group) {
+    for (const child of shape.children) {
+      yield* collectShapeTree(child);
+    }
   }
 }

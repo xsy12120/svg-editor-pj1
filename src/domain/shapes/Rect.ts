@@ -14,10 +14,10 @@ export interface RectInit {
 }
 
 export class Rect extends Shape {
-  private readonly positionX: number;
-  private readonly positionY: number;
-  private readonly rectWidth: number;
-  private readonly rectHeight: number;
+  private positionX: number;
+  private positionY: number;
+  private rectWidth: number;
+  private rectHeight: number;
   private readonly fillColor: string | undefined;
 
   constructor(init: RectInit) {
@@ -47,6 +47,18 @@ export class Rect extends Shape {
 
   get fill(): string | undefined {
     return this.fillColor;
+  }
+
+  override move(dx: number, dy: number): void {
+    this.positionX += dx;
+    this.positionY += dy;
+  }
+
+  override scale(factor: number): void {
+    this.positionX *= factor;
+    this.positionY *= factor;
+    this.rectWidth *= factor;
+    this.rectHeight *= factor;
   }
 
   override toDescriptor(): ShapeDescriptor {
