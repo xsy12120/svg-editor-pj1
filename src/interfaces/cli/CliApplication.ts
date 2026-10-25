@@ -6,6 +6,7 @@ import type { EditorSession } from "../../application/EditorSession.js";
 import type { CommandProcessor } from "../../application/history/CommandProcessor.js";
 import { CommandParser } from "./CommandParser.js";
 import type { CliPresenter } from "./CliPresenter.js";
+import { UserFacingError } from "../../shared/errors/UserFacingError.js";
 
 const BANNER = "svg-editor 0.1 — type 'help' for commands";
 const PROMPT = "svg> ";
@@ -36,6 +37,9 @@ export class CliApplication {
           const command = this.commands.create(parsed.name, parsed.args);
           this.presenter.present(this.processor.execute(command));
         } catch (error) {
+          if (!(error instanceof UserFacingError)) {
+            throw error;
+          }
           this.presenter.presentError(error);
         }
       }

@@ -1,5 +1,5 @@
 import type { TreeSnapshot } from "../queries/TreeSnapshot.js";
 
-export interface DocumentTreeRenderer {
+export interface TreeSnapshotRenderer {
   render(snapshot: TreeSnapshot): string;
 }

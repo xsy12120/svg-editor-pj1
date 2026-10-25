@@ -1,16 +1,22 @@
 import type { CommandResult } from "../commands/CommandResult.js";
 import type { PreparedEdit } from "../commands/PreparedEdit.js";
 import type { UndoableCommand } from "../commands/UndoableCommand.js";
+import { CommandRejectedError } from "../../shared/errors/CommandRejectedError.js";
 
 export class CommandInvoker<TContext> {
   private readonly undoStack: PreparedEdit<TContext>[] = [];
   private readonly redoStack: PreparedEdit<TContext>[] = [];
   private historyBlocked = false;
 
-  constructor(private readonly context: TContext) {}
+  constructor(readonly context: TContext) {}
 
   execute(command: UndoableCommand<TContext>): CommandResult {
-    const edit = command.prepare(this.context);
+    let edit: PreparedEdit<TContext>;
+    try {
+      edit = command.prepare(this.context);
+    } catch (error) {
+      throw CommandRejectedError.from(error);
+    }
     const result = edit.apply(this.context);
     if (!result.success) {
       return result;
@@ -27,7 +33,7 @@ export class CommandInvoker<TContext> {
 
     const edit = this.undoStack.at(-1);
     if (edit === undefined) {
-      throw new Error("nothing to undo");
+      throw new CommandRejectedError("nothing to undo");
     }
 
     const result = edit.revert(this.context);
@@ -45,7 +51,7 @@ export class CommandInvoker<TContext> {
 
     const edit = this.redoStack.at(-1);
     if (edit === undefined) {
-      throw new Error("nothing to redo");
+      throw new CommandRejectedError("nothing to redo");
     }
 
     const result = edit.apply(this.context);
@@ -66,7 +72,9 @@ export class CommandInvoker<TContext> {
 
   private ensureHistoryAvailable(operation: "undo" | "redo"): void {
     if (this.historyBlocked) {
-      throw new Error(`${operation} not allowed after io command`);
+      throw new CommandRejectedError(
+        `${operation} not allowed after io command`
+      );
     }
   }
 }

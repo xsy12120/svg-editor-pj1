@@ -7,9 +7,19 @@ export interface TreeSnapshotNode {
   readonly children: readonly TreeSnapshotNode[];
 }
 
-export interface TreeSnapshot {
+interface TreeSnapshotBase {
   readonly width: number;
   readonly height: number;
-  readonly root: TreeSnapshotNode | null;
+}
+
+export interface FullTreeSnapshot extends TreeSnapshotBase {
+  readonly root: null;
   readonly roots: readonly TreeSnapshotNode[];
 }
+
+export interface ScopedTreeSnapshot extends TreeSnapshotBase {
+  readonly root: TreeSnapshotNode;
+  readonly roots: readonly [];
+}
+
+export type TreeSnapshot = FullTreeSnapshot | ScopedTreeSnapshot;

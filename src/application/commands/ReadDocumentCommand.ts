@@ -3,6 +3,7 @@ import type { FileStore } from "../ports/FileStore.js";
 import type { SvgCodec } from "../ports/SvgCodec.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { DocumentCommand } from "./ExecutableCommand.js";
+import { CommandRejectedError } from "../../shared/errors/CommandRejectedError.js";
 
 export class ReadDocumentCommand implements DocumentCommand<EditorSession> {
   readonly kind = "document";
@@ -20,7 +21,7 @@ export class ReadDocumentCommand implements DocumentCommand<EditorSession> {
     try {
       content = this.files.read(this.path);
     } catch {
-      throw new Error(`cannot read file: ${this.path}`);
+      throw new CommandRejectedError(`cannot read file: ${this.path}`);
     }
 
     let parsed;
@@ -28,7 +29,7 @@ export class ReadDocumentCommand implements DocumentCommand<EditorSession> {
       parsed = this.codec.decode(content);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`invalid SVG: ${message}`);
+      throw new CommandRejectedError(`invalid SVG: ${message}`);
     }
 
     session.replaceDocument(parsed.document, this.path);

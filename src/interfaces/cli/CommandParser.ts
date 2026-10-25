@@ -1,3 +1,5 @@
+import { UserInputError } from "../../shared/errors/UserInputError.js";
+
 export interface ParsedCommand {
   readonly name: string;
   readonly args: readonly string[];
@@ -70,7 +72,7 @@ export class CommandParser {
     }
 
     if (inQuotes) {
-      throw new Error("unterminated quoted argument");
+      throw new UserInputError("unterminated quoted argument");
     }
     if (tokenStarted) {
       tokens.push(current);

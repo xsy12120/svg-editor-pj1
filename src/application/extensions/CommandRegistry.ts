@@ -1,4 +1,5 @@
 import type { ExecutableCommand } from "../commands/ExecutableCommand.js";
+import { CommandRejectedError } from "../../shared/errors/CommandRejectedError.js";
 import type { CommandProvider } from "./CommandProvider.js";
 
 export interface CommandHelpEntry {
@@ -18,12 +19,15 @@ export class CommandRegistry<TContext> {
   }
 
   create(name: string, args: readonly string[]): ExecutableCommand<TContext> {
-    const provider = this.providers.get(name);
-    if (provider === undefined) {
-      throw new Error(`unknown command: ${name}`);
+    try {
+      const provider = this.providers.get(name);
+      if (provider === undefined) {
+        throw new CommandRejectedError(`unknown command: ${name}`);
+      }
+      return provider.create(args);
+    } catch (error) {
+      throw CommandRejectedError.from(error);
     }
-
-    return provider.create(args);
   }
 
   listHelpEntries(): readonly CommandHelpEntry[] {

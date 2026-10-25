@@ -45,7 +45,7 @@ export function createCliApplication(
 ): CliApplication {
   const session = new EditorSession();
   const invoker = new CommandInvoker(session);
-  const processor = new CommandProcessor(session, invoker);
+  const processor = new CommandProcessor(invoker);
   const commands = new CommandRegistry<EditorSession>();
   const files = new NodeFileStore();
   const shapes = new ShapeFactory();

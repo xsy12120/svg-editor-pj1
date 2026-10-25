@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = fileURLToPath(new URL("../../", import.meta.url));
@@ -11,15 +12,26 @@ export interface ProcessResult {
   readonly stderr: string;
 }
 
-export function runCli(input = ""): Promise<ProcessResult> {
+interface RunCliOptions {
+  readonly npmScript?: boolean;
+}
+
+export function runCli(
+  input = "",
+  options: RunCliOptions = {}
+): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
     const npmExecPath = process.env["npm_execpath"];
-    if (npmExecPath === undefined) {
+    if (options.npmScript === true && npmExecPath === undefined) {
       reject(new Error("npm_execpath is unavailable; run this test via npm test"));
       return;
     }
 
-    const child = spawn(process.execPath, [npmExecPath, "run", "cli"], {
+    const args =
+      options.npmScript === true
+        ? [npmExecPath as string, "run", "cli"]
+        : [join(projectRoot, "dist", "main.js")];
+    const child = spawn(process.execPath, args, {
       cwd: projectRoot,
       env: {
         ...process.env,

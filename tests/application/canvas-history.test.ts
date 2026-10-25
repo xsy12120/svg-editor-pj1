@@ -31,7 +31,7 @@ function createHarness() {
   const session = new EditorSession();
   session.initializeCanvas(800, 600);
   const invoker = new CommandInvoker(session);
-  const processor = new CommandProcessor(session, invoker);
+  const processor = new CommandProcessor(invoker);
 
   return { session, invoker, processor };
 }

@@ -16,6 +16,8 @@ export class SetAttributeCommand implements UndoableCommand<EditorSession> {
   prepare(session: EditorSession): PreparedEdit<EditorSession> {
     const shape = requireShape(session, this.id);
     const previousValue = shape.getAttribute(this.name);
+    shape.setAttribute(this.name, this.value);
+    shape.setAttribute(this.name, previousValue);
     return new SetAttributeEdit(
       shape,
       this.name,

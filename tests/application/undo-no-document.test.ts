@@ -10,7 +10,7 @@ describe("undo and redo without a document", () => {
   it("return the standard no-document error", () => {
     const session = new EditorSession();
     const invoker = new CommandInvoker(session);
-    const processor = new CommandProcessor(session, invoker);
+    const processor = new CommandProcessor(invoker);
 
     expect(() => processor.execute(new UndoCommand(invoker))).toThrow(
       "no document. use 'init' or 'read' first"

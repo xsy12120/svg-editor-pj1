@@ -2,13 +2,13 @@ import type { Writable } from "node:stream";
 
 import type { CommandResult } from "../../application/commands/CommandResult.js";
 import type { CommandView } from "../../application/queries/CommandView.js";
-import type { DocumentTreeRenderer } from "../../application/ports/DocumentTreeRenderer.js";
+import type { TreeSnapshotRenderer } from "../../application/ports/TreeSnapshotRenderer.js";
 import type { ShapeDetailsRenderer } from "../../application/ports/ShapeDetailsRenderer.js";
 
 export class CliPresenter {
   constructor(
     private readonly output: Writable,
-    private readonly treeRenderer: DocumentTreeRenderer,
+    private readonly treeRenderer: TreeSnapshotRenderer,
     private readonly shapeDetailsRenderer: ShapeDetailsRenderer
   ) {}
 

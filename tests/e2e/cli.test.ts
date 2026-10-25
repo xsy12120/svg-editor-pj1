@@ -4,7 +4,7 @@ import { runCli } from "../support/cli.js";
 
 describe("CLI", () => {
   it("starts the editor and exits cleanly at end of input", async () => {
-    const result = await runCli();
+    const result = await runCli("", { npmScript: true });
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain(

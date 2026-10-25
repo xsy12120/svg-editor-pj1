@@ -1,10 +1,10 @@
-import type { DocumentTreeRenderer } from "../../application/ports/DocumentTreeRenderer.js";
+import type { TreeSnapshotRenderer } from "../../application/ports/TreeSnapshotRenderer.js";
 import type {
   TreeSnapshot,
   TreeSnapshotNode
 } from "../../application/queries/TreeSnapshot.js";
 
-export class CliTreeRenderer implements DocumentTreeRenderer {
+export class CliTreeRenderer implements TreeSnapshotRenderer {
   render(snapshot: TreeSnapshot): string {
     if (snapshot.root !== null) {
       const lines = [this.formatNode(snapshot.root)];

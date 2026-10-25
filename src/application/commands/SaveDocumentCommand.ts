@@ -4,6 +4,7 @@ import type { SvgCodec } from "../ports/SvgCodec.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { DocumentCommand } from "./ExecutableCommand.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
+import { CommandRejectedError } from "../../shared/errors/CommandRejectedError.js";
 
 export class SaveDocumentCommand implements DocumentCommand<EditorSession> {
   readonly kind = "document";
@@ -17,7 +18,7 @@ export class SaveDocumentCommand implements DocumentCommand<EditorSession> {
   validate(session: EditorSession): void {
     requireDocument(session);
     if (this.requestedPath === undefined && session.documentPath === null) {
-      throw new Error("no file path. use 'save <file.svg>'");
+      throw new CommandRejectedError("no file path. use 'save <file.svg>'");
     }
   }
 
@@ -25,14 +26,14 @@ export class SaveDocumentCommand implements DocumentCommand<EditorSession> {
     const document = requireDocument(session);
     const path = this.requestedPath ?? session.documentPath;
     if (path === null) {
-      throw new Error("no file path. use 'save <file.svg>'");
+      throw new CommandRejectedError("no file path. use 'save <file.svg>'");
     }
 
     const content = this.codec.encode(document);
     try {
       this.files.write(path, content);
     } catch {
-      throw new Error(`cannot write file: ${path}`);
+      throw new CommandRejectedError(`cannot write file: ${path}`);
     }
     session.setDocumentPath(path);
 
