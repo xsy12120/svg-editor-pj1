@@ -7,11 +7,13 @@ import { CreateCommandProvider } from "../application/commands/CreateCommandProv
 import { DeleteCommandProvider } from "../application/commands/DeleteCommandProvider.js";
 import { FrontCommandProvider } from "../application/commands/FrontCommandProvider.js";
 import { GroupCommandProvider } from "../application/commands/GroupCommandProvider.js";
+import { HelpCommandProvider } from "../application/commands/HelpCommandProvider.js";
 import { InitCommandProvider } from "../application/commands/InitCommandProvider.js";
 import { MoveCommandProvider } from "../application/commands/MoveCommandProvider.js";
 import { RedoCommandProvider } from "../application/commands/RedoCommandProvider.js";
 import { ScaleCommandProvider } from "../application/commands/ScaleCommandProvider.js";
 import { SetAttributeCommandProvider } from "../application/commands/SetAttributeCommandProvider.js";
+import { ShowCommandProvider } from "../application/commands/ShowCommandProvider.js";
 import { TreeCommandProvider } from "../application/commands/TreeCommandProvider.js";
 import { UngroupCommandProvider } from "../application/commands/UngroupCommandProvider.js";
 import { UndoCommandProvider } from "../application/commands/UndoCommandProvider.js";
@@ -27,6 +29,7 @@ import { TextProvider } from "../application/shapes/providers/TextProvider.js";
 import { ShapeFactory } from "../application/shapes/ShapeFactory.js";
 import { CliApplication } from "../interfaces/cli/CliApplication.js";
 import { CliPresenter } from "../interfaces/cli/CliPresenter.js";
+import { CliShapeDetailsRenderer } from "../interfaces/cli/CliShapeDetailsRenderer.js";
 import { CliTreeRenderer } from "../interfaces/cli/CliTreeRenderer.js";
 
 export function createCliApplication(
@@ -57,8 +60,10 @@ export function createCliApplication(
   commands.register(new FrontCommandProvider());
   commands.register(new BackCommandProvider());
   commands.register(new TreeCommandProvider(new CliTreeRenderer()));
+  commands.register(new ShowCommandProvider(new CliShapeDetailsRenderer()));
   commands.register(new UndoCommandProvider(invoker));
   commands.register(new RedoCommandProvider(invoker));
+  commands.register(new HelpCommandProvider(commands));
 
   return new CliApplication(
     input,

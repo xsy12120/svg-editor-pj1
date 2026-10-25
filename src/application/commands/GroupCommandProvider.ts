@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class GroupCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "group";
+  readonly usage = "group <newGroupId> <shapeId> [shapeId...]";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     const [groupId, ...memberIds] = args;

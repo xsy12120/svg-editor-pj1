@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class UngroupCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "ungroup";
+  readonly usage = "ungroup <groupId>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 1 || args[0] === undefined) {

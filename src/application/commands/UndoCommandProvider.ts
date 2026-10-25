@@ -6,6 +6,7 @@ import { UndoCommand } from "./UndoCommand.js";
 
 export class UndoCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "undo";
+  readonly usage = "undo";
 
   constructor(private readonly invoker: CommandInvoker<EditorSession>) {}
 

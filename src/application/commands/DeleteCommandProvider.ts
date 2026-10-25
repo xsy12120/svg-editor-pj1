@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class DeleteCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "delete";
+  readonly usage = "delete <shapeId>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 1 || args[0] === undefined) {

@@ -5,6 +5,7 @@ import { ZOrderCommand } from "./ZOrderCommand.js";
 
 export class BackCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "back";
+  readonly usage = "back <shapeId>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 1 || args[0] === undefined) {

@@ -6,6 +6,7 @@ import { RedoCommand } from "./RedoCommand.js";
 
 export class RedoCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "redo";
+  readonly usage = "redo";
 
   constructor(private readonly invoker: CommandInvoker<EditorSession>) {}
 

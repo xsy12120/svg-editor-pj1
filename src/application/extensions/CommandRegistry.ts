@@ -1,6 +1,11 @@
 import type { ExecutableCommand } from "../commands/ExecutableCommand.js";
 import type { CommandProvider } from "./CommandProvider.js";
 
+export interface CommandHelpEntry {
+  readonly name: string;
+  readonly usage: string;
+}
+
 export class CommandRegistry<TContext> {
   private readonly providers = new Map<string, CommandProvider<TContext>>();
 
@@ -19,5 +24,11 @@ export class CommandRegistry<TContext> {
     }
 
     return provider.create(args);
+  }
+
+  listHelpEntries(): readonly CommandHelpEntry[] {
+    return [...this.providers.values()]
+      .map(({ name, usage }) => ({ name, usage }))
+      .sort((left, right) => left.name.localeCompare(right.name));
   }
 }

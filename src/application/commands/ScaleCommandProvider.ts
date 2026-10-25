@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class ScaleCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "scale";
+  readonly usage = "scale <id> <factor>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 2) {

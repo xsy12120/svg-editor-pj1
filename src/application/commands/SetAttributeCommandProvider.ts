@@ -7,6 +7,7 @@ export class SetAttributeCommandProvider
   implements CommandProvider<EditorSession>
 {
   readonly name = "set";
+  readonly usage = "set <id> <attribute> <value>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 3) {

@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class AddToCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "addto";
+  readonly usage = "addto <groupId> <shapeId>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 2 || args[0] === undefined || args[1] === undefined) {

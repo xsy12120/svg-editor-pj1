@@ -6,6 +6,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class CreateCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "create";
+  readonly usage = "create <type> <id> [params...] [in <containerId>]";
 
   constructor(private readonly shapeFactory: ShapeFactory) {}
 

@@ -5,6 +5,7 @@ import type { UndoableCommand } from "./UndoableCommand.js";
 
 export class MoveCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "move";
+  readonly usage = "move <id> <dx> <dy>";
 
   create(args: readonly string[]): UndoableCommand<EditorSession> {
     if (args.length !== 3) {

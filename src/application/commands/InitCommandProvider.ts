@@ -8,6 +8,7 @@ const DEFAULT_HEIGHT = 600;
 
 export class InitCommandProvider implements CommandProvider<EditorSession> {
   readonly name = "init";
+  readonly usage = "init [width] [height]";
 
   create(args: readonly string[]): DocumentCommand<EditorSession> {
     if (args.length > 2) {
