@@ -8,6 +8,7 @@ import type { ShapeFactory } from "../../application/shapes/ShapeFactory.js";
 import { Document } from "../../domain/model/Document.js";
 import { Group } from "../../domain/shapes/Group.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
+import { SvgTransform } from "./SvgTransform.js";
 
 type OrderedNode = Record<string, unknown>;
 
@@ -104,6 +105,8 @@ export class XmlSvgCodec implements SvgCodec {
           shapeAttributes[name] = value;
         }
       }
+      const rawTransform = shapeAttributes["transform"];
+      delete shapeAttributes["transform"];
 
       if (elementName === "text") {
         shapeAttributes["text"] = this.textContentOf(node, elementName);
@@ -126,6 +129,9 @@ export class XmlSvgCodec implements SvgCodec {
             shape.addChild(child);
           }
         }
+      }
+      if (rawTransform !== undefined) {
+        SvgTransform.parse(rawTransform).apply(shape);
       }
       shapes.push(shape);
     }

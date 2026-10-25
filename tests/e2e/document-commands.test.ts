@@ -95,6 +95,29 @@ describe("SVG document commands", () => {
     expect(saved).toContain('<rect id="rect1"');
   });
 
+  it("normalizes nested translate and scale transforms while reading SVG", async () => {
+    const path = join(workingDirectory, "transformed.svg");
+    await writeFile(
+      path,
+      [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">',
+        '  <g id="outer" transform="translate(60,40)">',
+        '    <g id="inner" transform="translate(200,0) scale(0.8)">',
+        '      <rect id="r1" x="10" y="0" width="100" height="50"/>',
+        "    </g>",
+        "  </g>",
+        "</svg>"
+      ].join("\n")
+    );
+
+    const result = await runCli(`read ${path}\ntree`);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain(
+      "rect#r1 x=268 y=40 w=80 h=40"
+    );
+  });
+
   it("keeps the current document when reading a missing file fails", async () => {
     const missingPath = join(workingDirectory, "missing.svg");
     const result = await runCli(
