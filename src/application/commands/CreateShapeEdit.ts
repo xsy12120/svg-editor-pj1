@@ -1,4 +1,5 @@
 import type { EditorSession } from "../EditorSession.js";
+import type { Group } from "../../domain/shapes/Group.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
@@ -6,7 +7,9 @@ import type { PreparedEdit } from "./PreparedEdit.js";
 export class CreateShapeEdit implements PreparedEdit<EditorSession> {
   constructor(
     private readonly typeName: string,
-    private readonly shape: Shape
+    private readonly shape: Shape,
+    private readonly parent: Group | null,
+    private readonly index: number
   ) {}
 
   apply(session: EditorSession): CommandResult {
@@ -15,7 +18,7 @@ export class CreateShapeEdit implements PreparedEdit<EditorSession> {
       throw new Error("no document. use 'init' or 'read' first");
     }
 
-    document.addShape(this.shape);
+    document.insertShapeAt(this.shape, this.parent, this.index);
 
     return {
       success: true,
