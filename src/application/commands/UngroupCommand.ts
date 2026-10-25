@@ -16,6 +16,9 @@ export class UngroupCommand implements UndoableCommand<EditorSession> {
     if (!(group instanceof ContainerShape)) {
       throw new Error(`no such shape: ${this.groupId}`);
     }
+    if (!group.canUngroup) {
+      throw new Error(`cannot ungroup composite shape: ${this.groupId}`);
+    }
 
     const placement = document.findPlacement(this.groupId);
     if (placement === undefined) {

@@ -4,8 +4,43 @@ import { EditorSession } from "../../src/application/EditorSession.js";
 import { GroupCommand } from "../../src/application/commands/GroupCommand.js";
 import { UngroupCommand } from "../../src/application/commands/UngroupCommand.js";
 import { CommandInvoker } from "../../src/application/history/CommandInvoker.js";
+import { ContainerShape } from "../../src/domain/shapes/ContainerShape.js";
 import { Group } from "../../src/domain/shapes/Group.js";
 import { Rect } from "../../src/domain/shapes/Rect.js";
+import type {
+  ShapeAttribute,
+  ShapeDescriptor
+} from "../../src/domain/shapes/ShapeDescriptor.js";
+
+class NonUngroupableContainer extends ContainerShape {
+  override get canUngroup(): boolean {
+    return false;
+  }
+
+  override get svgTagName(): string {
+    return "g";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    return [{ name: "data-kind", value: "plugin" }];
+  }
+
+  override getAttribute(name: string): string | undefined {
+    throw new Error(`unknown attribute: ${name}`);
+  }
+
+  override setAttribute(name: string): void {
+    throw new Error(`unknown attribute: ${name}`);
+  }
+
+  override toDescriptor(): ShapeDescriptor {
+    return {
+      typeName: "plugin",
+      id: this.id,
+      attributes: [{ name: "data-kind", value: "plugin" }]
+    };
+  }
+}
 
 function createHarness() {
   const session = new EditorSession();
@@ -109,6 +144,19 @@ describe("group and ungroup commands", () => {
 
     expect(() => invoker.execute(new UngroupCommand("scene"))).toThrow(
       "cannot ungroup top-level container: scene"
+    );
+  });
+
+  it("rejects ungrouping a composite plugin container", () => {
+    const { session, invoker } = createHarness();
+    const root = new Group("root");
+    const plugin = new NonUngroupableContainer("plugin1");
+    plugin.addChild(rect("r1"));
+    root.addChild(plugin);
+    session.document?.addShape(root);
+
+    expect(() => invoker.execute(new UngroupCommand("plugin1"))).toThrow(
+      "cannot ungroup composite shape: plugin1"
     );
   });
 });

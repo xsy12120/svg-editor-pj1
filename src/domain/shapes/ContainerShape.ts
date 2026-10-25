@@ -4,6 +4,10 @@ import { Shape } from "./Shape.js";
 export abstract class ContainerShape extends Shape {
   private readonly childShapes: Shape[] = [];
 
+  get canUngroup(): boolean {
+    return true;
+  }
+
   get children(): readonly Shape[] {
     return this.childShapes;
   }

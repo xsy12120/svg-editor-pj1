@@ -118,6 +118,30 @@ describe("SVG document commands", () => {
     );
   });
 
+  it("preserves text sizing and anchoring through transform and save", async () => {
+    const sourcePath = join(workingDirectory, "text-transform.svg");
+    const savedPath = join(workingDirectory, "text-transform-saved.svg");
+    await writeFile(
+      sourcePath,
+      [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">',
+        '  <g id="scaled" transform="scale(2)">',
+        '    <text id="t1" x="10" y="20" font-size="16" text-anchor="middle">End</text>',
+        "  </g>",
+        "</svg>"
+      ].join("\n")
+    );
+
+    const result = await runCli(
+      [`read ${sourcePath}`, `save ${savedPath}`].join("\n")
+    );
+
+    expect(result.exitCode).toBe(0);
+    const saved = await readFile(savedPath, "utf8");
+    expect(saved).toContain('font-size="32"');
+    expect(saved).toContain('text-anchor="middle"');
+  });
+
   it("keeps the current document when reading a missing file fails", async () => {
     const missingPath = join(workingDirectory, "missing.svg");
     const result = await runCli(

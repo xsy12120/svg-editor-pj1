@@ -5,6 +5,7 @@ import type { ShapeProvider } from "../ShapeProvider.js";
 import {
   assertShapeType,
   parseFiniteNumber,
+  parsePositiveNumber,
   requireAttribute,
   requireShapeId
 } from "./ShapeProviderSupport.js";
@@ -35,7 +36,18 @@ export class TextProvider implements ShapeProvider {
       id: init.id,
       x: parseFiniteNumber(init.attributes["x"], "text x"),
       y: parseFiniteNumber(init.attributes["y"], "text y"),
-      content: requireAttribute(init.attributes["text"], "text content")
+      content: requireAttribute(init.attributes["text"], "text content"),
+      ...(init.attributes["font-size"] === undefined
+        ? {}
+        : {
+            fontSize: parsePositiveNumber(
+              init.attributes["font-size"],
+              "text font-size"
+            )
+          }),
+      ...(init.attributes["text-anchor"] === undefined
+        ? {}
+        : { textAnchor: init.attributes["text-anchor"] })
     });
   }
 }

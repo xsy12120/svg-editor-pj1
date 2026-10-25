@@ -1,4 +1,11 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import {
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
+import { basename, dirname, join } from "node:path";
 
 import type { FileStore } from "../../application/ports/FileStore.js";
 
@@ -8,6 +15,16 @@ export class NodeFileStore implements FileStore {
   }
 
   write(path: string, content: string): void {
-    writeFileSync(path, content, "utf8");
+    const temporaryPath = join(
+      dirname(path),
+      `.${basename(path)}.${process.pid}.${randomUUID()}.tmp`
+    );
+    try {
+      writeFileSync(temporaryPath, content, "utf8");
+      renameSync(temporaryPath, path);
+    } catch (error) {
+      rmSync(temporaryPath, { force: true });
+      throw error;
+    }
   }
 }

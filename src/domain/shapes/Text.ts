@@ -8,16 +8,28 @@ export interface TextInit {
   readonly x: number;
   readonly y: number;
   readonly content: string;
+  readonly fontSize?: number;
+  readonly textAnchor?: string;
 }
 
 export class Text extends Shape {
   private position: Point;
   private textContent: string;
+  private fontSizeValue: number | undefined;
+  private textAnchorValue: string | undefined;
 
   constructor(init: TextInit) {
     super(init.id);
     this.position = new Point(init.x, init.y);
     this.textContent = init.content;
+    if (
+      init.fontSize !== undefined &&
+      (!Number.isFinite(init.fontSize) || init.fontSize <= 0)
+    ) {
+      throw new Error("text font-size must be positive");
+    }
+    this.fontSizeValue = init.fontSize;
+    this.textAnchorValue = init.textAnchor;
   }
 
   override get anchor(): Point {
@@ -32,7 +44,19 @@ export class Text extends Shape {
     if (!Number.isFinite(factor) || factor <= 0) {
       throw new Error("scale factor must be positive");
     }
-    this.position = this.position.scale(factor);
+    const position = this.position.scale(factor);
+    const fontSize =
+      this.fontSizeValue === undefined
+        ? undefined
+        : this.fontSizeValue * factor;
+    if (
+      fontSize !== undefined &&
+      (!Number.isFinite(fontSize) || fontSize <= 0)
+    ) {
+      throw new Error("text font-size must be positive");
+    }
+    this.position = position;
+    this.fontSizeValue = fontSize;
   }
 
   override get svgTagName(): string {
@@ -44,6 +68,12 @@ export class Text extends Shape {
       { name: "x", value: String(this.position.x) },
       { name: "y", value: String(this.position.y) }
     ];
+    if (this.fontSizeValue !== undefined) {
+      attributes.push({ name: "font-size", value: String(this.fontSizeValue) });
+    }
+    if (this.textAnchorValue !== undefined) {
+      attributes.push({ name: "text-anchor", value: this.textAnchorValue });
+    }
     this.appendStyleAttributes(attributes);
     return attributes;
   }
@@ -54,9 +84,11 @@ export class Text extends Shape {
 
   override captureGeometryState(): GeometryState {
     const position = this.position;
+    const fontSize = this.fontSizeValue;
     return {
       restore: (): void => {
         this.position = position;
+        this.fontSizeValue = fontSize;
       }
     };
   }
@@ -105,6 +137,12 @@ export class Text extends Shape {
       { name: "y", value: String(this.position.y) },
       { name: "text", value: this.textContent }
     ];
+    if (this.fontSizeValue !== undefined) {
+      attributes.push({ name: "font-size", value: String(this.fontSizeValue) });
+    }
+    if (this.textAnchorValue !== undefined) {
+      attributes.push({ name: "text-anchor", value: this.textAnchorValue });
+    }
     this.appendStyleAttributes(attributes);
     return { typeName: "text", id: this.id, attributes };
   }
