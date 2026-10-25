@@ -1,13 +1,13 @@
 import type { EditorSession } from "../EditorSession.js";
+import type { TreeSnapshotBuilder } from "../queries/TreeSnapshotBuilder.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { QueryCommand } from "./ExecutableCommand.js";
-import type { DocumentTreeRenderer } from "../ports/DocumentTreeRenderer.js";
 
 export class TreeCommand implements QueryCommand<EditorSession> {
   readonly kind = "query";
 
   constructor(
-    private readonly renderer: DocumentTreeRenderer,
+    private readonly snapshotBuilder: TreeSnapshotBuilder,
     private readonly rootId?: string
   ) {}
 
@@ -29,8 +29,12 @@ export class TreeCommand implements QueryCommand<EditorSession> {
 
     return {
       success: true,
-      message: this.renderer.render(document, this.rootId),
-      affectedIds: []
+      message: "",
+      affectedIds: [],
+      view: {
+        kind: "tree",
+        snapshot: this.snapshotBuilder.build(document, this.rootId)
+      }
     };
   }
 }

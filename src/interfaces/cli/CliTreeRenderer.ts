@@ -1,28 +1,24 @@
-import type { Document } from "../../domain/model/Document.js";
 import type { DocumentTreeRenderer } from "../../application/ports/DocumentTreeRenderer.js";
-import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
-import type { Shape } from "../../domain/shapes/Shape.js";
+import type {
+  TreeSnapshot,
+  TreeSnapshotNode
+} from "../../application/queries/TreeSnapshot.js";
 
 export class CliTreeRenderer implements DocumentTreeRenderer {
-  render(document: Document, rootId?: string): string {
-    if (rootId !== undefined) {
-      const root = document.findShape(rootId);
-      if (root === undefined) {
-        throw new Error(`no such shape: ${rootId}`);
-      }
-      const lines = [this.formatShape(root)];
-      this.appendChildren(lines, root, "");
+  render(snapshot: TreeSnapshot): string {
+    if (snapshot.root !== null) {
+      const lines = [this.formatNode(snapshot.root)];
+      this.appendChildren(lines, snapshot.root, "");
       return lines.join("\n");
     }
 
-    const lines = [`svg (${document.width}x${document.height})`];
-    const shapes = document.shapes;
-    shapes.forEach((shape, index) => {
-      const connector = index === shapes.length - 1 ? "└── " : "├── ";
-      lines.push(`${connector}${this.formatShape(shape)}`);
+    const lines = [`svg (${snapshot.width}x${snapshot.height})`];
+    snapshot.roots.forEach((node, index) => {
+      const connector = index === snapshot.roots.length - 1 ? "└── " : "├── ";
+      lines.push(`${connector}${this.formatNode(node)}`);
       this.appendChildren(
         lines,
-        shape,
+        node,
         connector === "└── " ? "    " : "│   "
       );
     });
@@ -31,17 +27,13 @@ export class CliTreeRenderer implements DocumentTreeRenderer {
 
   private appendChildren(
     lines: string[],
-    shape: Shape,
+    node: TreeSnapshotNode,
     prefix: string
   ): void {
-    if (!(shape instanceof ContainerShape)) {
-      return;
-    }
-
-    shape.children.forEach((child, index) => {
-      const isLast = index === shape.children.length - 1;
+    node.children.forEach((child, index) => {
+      const isLast = index === node.children.length - 1;
       const connector = isLast ? "└── " : "├── ";
-      lines.push(`${prefix}${connector}${this.formatShape(child)}`);
+      lines.push(`${prefix}${connector}${this.formatNode(child)}`);
       this.appendChildren(
         lines,
         child,
@@ -50,12 +42,11 @@ export class CliTreeRenderer implements DocumentTreeRenderer {
     });
   }
 
-  private formatShape(shape: Shape): string {
-    const descriptor = shape.toDescriptor();
-    const attributes = descriptor.attributes
+  private formatNode(node: TreeSnapshotNode): string {
+    const attributes = node.attributes
       .map((attribute) => `${attribute.name}=${attribute.value}`)
       .join(" ");
     const suffix = attributes.length === 0 ? "" : ` ${attributes}`;
-    return `${descriptor.typeName}#${descriptor.id}${suffix}`;
+    return `${node.typeName}#${node.id}${suffix}`;
   }
 }

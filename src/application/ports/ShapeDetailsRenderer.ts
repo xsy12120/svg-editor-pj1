@@ -1,5 +1,5 @@
-import type { Shape } from "../../domain/shapes/Shape.js";
+import type { ShapeDetailsSnapshot } from "../queries/ShapeDetailsSnapshot.js";
 
 export interface ShapeDetailsRenderer {
-  render(shape: Shape, parent: Shape | null): string;
+  render(snapshot: ShapeDetailsSnapshot): string;
 }

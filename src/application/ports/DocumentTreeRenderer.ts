@@ -1,5 +1,5 @@
-import type { Document } from "../../domain/model/Document.js";
+import type { TreeSnapshot } from "../queries/TreeSnapshot.js";
 
 export interface DocumentTreeRenderer {
-  render(document: Document, rootId?: string): string;
+  render(snapshot: TreeSnapshot): string;
 }

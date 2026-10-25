@@ -1,18 +1,20 @@
 import type { ShapeDetailsRenderer } from "../../application/ports/ShapeDetailsRenderer.js";
-import type { Shape } from "../../domain/shapes/Shape.js";
+import type {
+  ShapeDetailsSnapshot,
+  ShapeReference
+} from "../../application/queries/ShapeDetailsSnapshot.js";
 
 export class CliShapeDetailsRenderer implements ShapeDetailsRenderer {
-  render(shape: Shape, parent: Shape | null): string {
-    const descriptor = shape.toDescriptor();
-    const geometry = descriptor.attributes.filter(
+  render(snapshot: ShapeDetailsSnapshot): string {
+    const geometry = snapshot.attributes.filter(
       (attribute) => !this.isStyleAttribute(attribute.name)
     );
-    const style = descriptor.attributes.filter((attribute) =>
+    const style = snapshot.attributes.filter((attribute) =>
       this.isStyleAttribute(attribute.name)
     );
 
     const lines = [
-      `${descriptor.typeName}#${descriptor.id} parent=${this.formatParent(parent)}`
+      `${snapshot.typeName}#${snapshot.id} parent=${this.formatParent(snapshot.parent)}`
     ];
     if (geometry.length > 0) {
       lines.push(`  ${this.formatAttributes(geometry)}`);
@@ -35,11 +37,10 @@ export class CliShapeDetailsRenderer implements ShapeDetailsRenderer {
     return name === "fill" || name === "stroke" || name === "stroke-width";
   }
 
-  private formatParent(parent: Shape | null): string {
+  private formatParent(parent: ShapeReference | null): string {
     if (parent === null) {
       return "svg";
     }
-    const descriptor = parent.toDescriptor();
-    return `${descriptor.typeName}#${descriptor.id}`;
+    return `${parent.typeName}#${parent.id}`;
   }
 }

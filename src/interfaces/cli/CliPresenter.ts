@@ -1,17 +1,40 @@
 import type { Writable } from "node:stream";
 
 import type { CommandResult } from "../../application/commands/CommandResult.js";
+import type { CommandView } from "../../application/queries/CommandView.js";
+import type { DocumentTreeRenderer } from "../../application/ports/DocumentTreeRenderer.js";
+import type { ShapeDetailsRenderer } from "../../application/ports/ShapeDetailsRenderer.js";
 
 export class CliPresenter {
-  constructor(private readonly output: Writable) {}
+  constructor(
+    private readonly output: Writable,
+    private readonly treeRenderer: DocumentTreeRenderer,
+    private readonly shapeDetailsRenderer: ShapeDetailsRenderer
+  ) {}
 
   present(result: CommandResult): void {
-    const prefix = result.success ? "" : "error: ";
-    this.output.write(`${prefix}${result.message}\n`);
+    if (!result.success) {
+      this.output.write(`error: ${result.message}\n`);
+      return;
+    }
+    if (result.view !== undefined) {
+      this.output.write(`${this.renderView(result.view)}\n`);
+      return;
+    }
+    this.output.write(`${result.message}\n`);
   }
 
   presentError(error: unknown): void {
     const message = error instanceof Error ? error.message : String(error);
     this.output.write(`error: ${message}\n`);
+  }
+
+  private renderView(view: CommandView): string {
+    switch (view.kind) {
+      case "tree":
+        return this.treeRenderer.render(view.snapshot);
+      case "shape-details":
+        return this.shapeDetailsRenderer.render(view.snapshot);
+    }
   }
 }

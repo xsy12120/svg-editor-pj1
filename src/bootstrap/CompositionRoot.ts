@@ -23,6 +23,8 @@ import { UndoCommandProvider } from "../application/commands/UndoCommandProvider
 import { CommandRegistry } from "../application/extensions/CommandRegistry.js";
 import { CommandInvoker } from "../application/history/CommandInvoker.js";
 import { CommandProcessor } from "../application/history/CommandProcessor.js";
+import { ShapeDetailsSnapshotBuilder } from "../application/queries/ShapeDetailsSnapshotBuilder.js";
+import { TreeSnapshotBuilder } from "../application/queries/TreeSnapshotBuilder.js";
 import { CircleProvider } from "../application/shapes/providers/CircleProvider.js";
 import { EllipseProvider } from "../application/shapes/providers/EllipseProvider.js";
 import { GroupProvider } from "../application/shapes/providers/GroupProvider.js";
@@ -69,17 +71,21 @@ export function createCliApplication(
   commands.register(new AddToCommandProvider());
   commands.register(new FrontCommandProvider());
   commands.register(new BackCommandProvider());
-  commands.register(new TreeCommandProvider(new CliTreeRenderer()));
-  commands.register(new ShowCommandProvider(new CliShapeDetailsRenderer()));
+  commands.register(new TreeCommandProvider(new TreeSnapshotBuilder()));
+  commands.register(
+    new ShowCommandProvider(new ShapeDetailsSnapshotBuilder())
+  );
   commands.register(new UndoCommandProvider(invoker));
   commands.register(new RedoCommandProvider(invoker));
   commands.register(new HelpCommandProvider(commands));
 
+  const treeRenderer = new CliTreeRenderer();
+  const shapeDetailsRenderer = new CliShapeDetailsRenderer();
   return new CliApplication(
     input,
     output,
     commands,
     processor,
-    new CliPresenter(output)
+    new CliPresenter(output, treeRenderer, shapeDetailsRenderer)
   );
 }
