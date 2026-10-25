@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { EditorSession } from "../../src/application/EditorSession.js";
 import { AddToCommand } from "../../src/application/commands/AddToCommand.js";
+import { MoveShapeCommand } from "../../src/application/commands/MoveShapeCommand.js";
 import { CommandInvoker } from "../../src/application/history/CommandInvoker.js";
 import { Group } from "../../src/domain/shapes/Group.js";
 import { Rect } from "../../src/domain/shapes/Rect.js";
@@ -56,6 +57,23 @@ describe("addto command", () => {
       "g1"
     ]);
     expect(group.children).toEqual([]);
+  });
+
+  it("keeps the moved shape addressable in the document index", () => {
+    const session = new EditorSession();
+    session.initializeCanvas(800, 600);
+    const invoker = new CommandInvoker(session);
+    const group = new Group("g1");
+    const moved = rect("moved");
+    session.document?.addShape(group);
+    session.document?.addShape(moved);
+
+    invoker.execute(new AddToCommand("g1", "moved"));
+
+    expect(session.document?.findShape("moved")).toBe(moved);
+    expect(session.document?.shapeCount).toBe(2);
+    invoker.execute(new MoveShapeCommand("moved", 5, 7));
+    expect([moved.x, moved.y]).toEqual([5, 7]);
   });
 
   it("rejects a target that is not a container", () => {

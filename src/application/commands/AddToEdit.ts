@@ -19,7 +19,11 @@ export class AddToEdit implements PreparedEdit<EditorSession> {
     if (document.detachShape(this.shape.id) !== this.shape) {
       throw new Error(`no such shape: ${this.shape.id}`);
     }
-    this.target.addChild(this.shape);
+    document.insertShapeAt(
+      this.shape,
+      this.target,
+      this.target.children.length
+    );
 
     return {
       success: true,
