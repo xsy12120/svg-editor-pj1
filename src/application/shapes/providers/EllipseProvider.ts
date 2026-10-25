@@ -3,6 +3,7 @@ import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
 import {
+  applyStyleAttributes,
   assertShapeType,
   parseFiniteNumber,
   parsePositiveNumber,
@@ -40,7 +41,7 @@ export class EllipseProvider implements ShapeProvider {
 
   create(init: ShapeInit): Shape {
     assertShapeType(init, this.typeName);
-    return new Ellipse({
+    const shape = new Ellipse({
       id: init.id,
       cx: parseFiniteNumber(init.attributes["cx"], "ellipse cx"),
       cy: parseFiniteNumber(init.attributes["cy"], "ellipse cy"),
@@ -50,5 +51,6 @@ export class EllipseProvider implements ShapeProvider {
         ? {}
         : { fill: init.attributes["fill"] })
     });
+    return applyStyleAttributes(shape, init);
   }
 }

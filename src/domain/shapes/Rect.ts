@@ -59,6 +59,21 @@ export class Rect extends Shape {
     this.rectHeight *= factor;
   }
 
+  override get svgTagName(): string {
+    return "rect";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [
+      { name: "x", value: String(this.positionX) },
+      { name: "y", value: String(this.positionY) },
+      { name: "width", value: String(this.rectWidth) },
+      { name: "height", value: String(this.rectHeight) }
+    ];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
   override captureGeometryState(): GeometryState {
     const x = this.positionX;
     const y = this.positionY;

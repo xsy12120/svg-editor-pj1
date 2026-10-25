@@ -3,6 +3,7 @@ import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
 import {
+  applyStyleAttributes,
   assertShapeType,
   parseFiniteNumber,
   parsePositiveNumber,
@@ -37,7 +38,7 @@ export class CircleProvider implements ShapeProvider {
 
   create(init: ShapeInit): Shape {
     assertShapeType(init, this.typeName);
-    return new Circle({
+    const shape = new Circle({
       id: init.id,
       cx: parseFiniteNumber(init.attributes["cx"], "circle cx"),
       cy: parseFiniteNumber(init.attributes["cy"], "circle cy"),
@@ -46,5 +47,6 @@ export class CircleProvider implements ShapeProvider {
         ? {}
         : { fill: init.attributes["fill"] })
     });
+    return applyStyleAttributes(shape, init);
   }
 }

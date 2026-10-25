@@ -31,6 +31,23 @@ export class Text extends Shape {
     this.positionY *= factor;
   }
 
+  override get svgTagName(): string {
+    return "text";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [
+      { name: "x", value: String(this.positionX) },
+      { name: "y", value: String(this.positionY) }
+    ];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
+  override get svgTextContent(): string {
+    return this.textContent;
+  }
+
   override captureGeometryState(): GeometryState {
     const x = this.positionX;
     const y = this.positionY;

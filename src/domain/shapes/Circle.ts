@@ -48,6 +48,20 @@ export class Circle extends Shape {
     this.radius *= factor;
   }
 
+  override get svgTagName(): string {
+    return "circle";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [
+      { name: "cx", value: String(this.centerX) },
+      { name: "cy", value: String(this.centerY) },
+      { name: "r", value: String(this.radius) }
+    ];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
   override captureGeometryState(): GeometryState {
     const cx = this.centerX;
     const cy = this.centerY;

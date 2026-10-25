@@ -7,8 +7,8 @@ export class Document {
   private readonly shapesById = new Map<string, Shape>();
 
   constructor(
-    private readonly canvasWidth: number,
-    private readonly canvasHeight: number
+    private canvasWidth: number,
+    private canvasHeight: number
   ) {}
 
   get width(): number {
@@ -21,6 +21,15 @@ export class Document {
 
   get shapes(): readonly Shape[] {
     return this.shapeList;
+  }
+
+  get shapeCount(): number {
+    return this.shapesById.size;
+  }
+
+  resize(width: number, height: number): void {
+    this.canvasWidth = width;
+    this.canvasHeight = height;
   }
 
   hasShape(id: string): boolean {

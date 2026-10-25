@@ -3,6 +3,7 @@ import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
 import {
+  applyStyleAttributes,
   assertShapeType,
   parseFiniteNumber,
   requireAttribute,
@@ -31,11 +32,12 @@ export class TextProvider implements ShapeProvider {
 
   create(init: ShapeInit): Shape {
     assertShapeType(init, this.typeName);
-    return new Text({
+    const shape = new Text({
       id: init.id,
       x: parseFiniteNumber(init.attributes["x"], "text x"),
       y: parseFiniteNumber(init.attributes["y"], "text y"),
       content: requireAttribute(init.attributes["text"], "text content")
     });
+    return applyStyleAttributes(shape, init);
   }
 }

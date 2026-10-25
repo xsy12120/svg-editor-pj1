@@ -42,6 +42,21 @@ export class Line extends Shape {
     this.endY *= factor;
   }
 
+  override get svgTagName(): string {
+    return "line";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [
+      { name: "x1", value: String(this.startX) },
+      { name: "y1", value: String(this.startY) },
+      { name: "x2", value: String(this.endX) },
+      { name: "y2", value: String(this.endY) }
+    ];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
   override captureGeometryState(): GeometryState {
     const x1 = this.startX;
     const y1 = this.startY;

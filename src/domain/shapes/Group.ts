@@ -93,6 +93,16 @@ export class Group extends Shape {
     }
   }
 
+  override get svgTagName(): string {
+    return "g";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
   override captureGeometryState(): GeometryState {
     const childStates = this.childShapes.map((child) =>
       child.captureGeometryState()

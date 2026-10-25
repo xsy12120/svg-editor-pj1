@@ -2,6 +2,7 @@ import { Rect } from "../../../domain/shapes/Rect.js";
 import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
+import { applyStyleAttributes } from "./ShapeProviderSupport.js";
 
 export class RectProvider implements ShapeProvider {
   readonly typeName = "rect";
@@ -51,7 +52,7 @@ export class RectProvider implements ShapeProvider {
       throw new Error("rect height must be positive");
     }
 
-    return new Rect({
+    const shape = new Rect({
       id: init.id,
       x,
       y,
@@ -61,6 +62,7 @@ export class RectProvider implements ShapeProvider {
         ? {}
         : { fill: init.attributes["fill"] })
     });
+    return applyStyleAttributes(shape, init);
   }
 
   private requireValue(value: string | undefined, name: string): string {

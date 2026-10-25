@@ -22,6 +22,12 @@ export abstract class Shape {
     return this.style.get("stroke");
   }
 
+  abstract get svgTagName(): string;
+  abstract toSvgAttributes(): readonly ShapeAttribute[];
+  get svgTextContent(): string | undefined {
+    return undefined;
+  }
+
   abstract move(dx: number, dy: number): void;
   abstract scale(factor: number): void;
   abstract captureGeometryState(): GeometryState;

@@ -40,6 +40,21 @@ export class Ellipse extends Shape {
     this.radiusY *= factor;
   }
 
+  override get svgTagName(): string {
+    return "ellipse";
+  }
+
+  override toSvgAttributes(): readonly ShapeAttribute[] {
+    const attributes: ShapeAttribute[] = [
+      { name: "cx", value: String(this.centerX) },
+      { name: "cy", value: String(this.centerY) },
+      { name: "rx", value: String(this.radiusX) },
+      { name: "ry", value: String(this.radiusY) }
+    ];
+    this.appendStyleAttributes(attributes);
+    return attributes;
+  }
+
   override captureGeometryState(): GeometryState {
     const cx = this.centerX;
     const cy = this.centerY;
