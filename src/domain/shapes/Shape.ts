@@ -35,6 +35,10 @@ export abstract class Shape {
   abstract setAttribute(name: string, value: string | undefined): void;
   abstract toDescriptor(): ShapeDescriptor;
 
+  *walkTree(): Generator<Shape> {
+    yield this;
+  }
+
   protected isStyleAttribute(name: string): boolean {
     return this.style.isSupported(name);
   }

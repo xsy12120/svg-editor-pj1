@@ -1,5 +1,5 @@
 import type { Shape } from "../shapes/Shape.js";
-import { Group } from "../shapes/Group.js";
+import { ContainerShape } from "../shapes/ContainerShape.js";
 import type { ShapePlacement } from "./ShapePlacement.js";
 
 export class Document {
@@ -51,8 +51,8 @@ export class Document {
     }
 
     for (const root of this.shapeList) {
-      if (root instanceof Group) {
-        const placement = findPlacementInGroup(root, id);
+      if (root instanceof ContainerShape) {
+        const placement = findPlacementInContainer(root, id);
         if (placement !== undefined) {
           return placement;
         }
@@ -75,7 +75,7 @@ export class Document {
       return undefined;
     }
 
-    for (const descendant of collectShapeTree(shape)) {
+    for (const descendant of shape.walkTree()) {
       this.shapesById.delete(descendant.id);
     }
     return shape;
@@ -83,10 +83,10 @@ export class Document {
 
   insertShapeAt(
     shape: Shape,
-    parent: Group | null,
+    parent: ContainerShape | null,
     index: number
   ): void {
-    const subtree = [...collectShapeTree(shape)];
+    const subtree = [...shape.walkTree()];
     const newIds = new Set<string>();
     for (const descendant of subtree) {
       if (this.shapesById.has(descendant.id) || newIds.has(descendant.id)) {
@@ -121,29 +121,20 @@ export class Document {
   }
 }
 
-function* collectShapeTree(shape: Shape): Generator<Shape> {
-  yield shape;
-  if (shape instanceof Group) {
-    for (const child of shape.children) {
-      yield* collectShapeTree(child);
-    }
-  }
-}
-
-function findPlacementInGroup(
-  group: Group,
+function findPlacementInContainer(
+  container: ContainerShape,
   id: string
 ): ShapePlacement | undefined {
-  for (let index = 0; index < group.children.length; index += 1) {
-    const child = group.children[index];
+  for (let index = 0; index < container.children.length; index += 1) {
+    const child = container.children[index];
     if (child === undefined) {
       continue;
     }
     if (child.id === id) {
-      return { parent: group, index };
+      return { parent: container, index };
     }
-    if (child instanceof Group) {
-      const nested = findPlacementInGroup(child, id);
+    if (child instanceof ContainerShape) {
+      const nested = findPlacementInContainer(child, id);
       if (nested !== undefined) {
         return nested;
       }

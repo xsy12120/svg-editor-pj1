@@ -1,5 +1,5 @@
 import type { EditorSession } from "../EditorSession.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import { GroupEdit } from "./GroupEdit.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
@@ -43,7 +43,7 @@ export class GroupCommand implements UndoableCommand<EditorSession> {
 
   private assertNoAncestorDescendantPair(members: readonly Shape[]): void {
     for (const member of members) {
-      if (!(member instanceof Group)) {
+      if (!(member instanceof ContainerShape)) {
         continue;
       }
       for (const other of members) {

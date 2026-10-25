@@ -14,12 +14,19 @@ export class ShapeFactory {
   }
 
   create(init: ShapeInit): Shape {
-    return this.requireProvider(init.typeName).create(init);
+    const shape = this.requireProvider(init.typeName).create(init);
+    for (const name of ["fill", "stroke", "stroke-width"]) {
+      const value = init.attributes[name];
+      if (value !== undefined) {
+        shape.setAttribute(name, value);
+      }
+    }
+    return shape;
   }
 
   createFromCliArgs(typeName: string, args: readonly string[]): Shape {
     const provider = this.requireProvider(typeName);
-    return provider.create(provider.createFromCliArgs(args));
+    return this.create(provider.createFromCliArgs(args));
   }
 
   private requireProvider(typeName: string): ShapeProvider {

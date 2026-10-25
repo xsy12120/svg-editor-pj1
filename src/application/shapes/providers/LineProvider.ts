@@ -3,7 +3,6 @@ import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
 import {
-  applyStyleAttributes,
   assertShapeType,
   parseFiniteNumber,
   requireAttribute,
@@ -40,16 +39,12 @@ export class LineProvider implements ShapeProvider {
 
   create(init: ShapeInit): Shape {
     assertShapeType(init, this.typeName);
-    const shape = new Line({
+    return new Line({
       id: init.id,
       x1: parseFiniteNumber(init.attributes["x1"], "line x1"),
       y1: parseFiniteNumber(init.attributes["y1"], "line y1"),
       x2: parseFiniteNumber(init.attributes["x2"], "line x2"),
-      y2: parseFiniteNumber(init.attributes["y2"], "line y2"),
-      ...(init.attributes["stroke"] === undefined
-        ? {}
-        : { stroke: init.attributes["stroke"] })
+      y2: parseFiniteNumber(init.attributes["y2"], "line y2")
     });
-    return applyStyleAttributes(shape, init);
   }
 }

@@ -11,7 +11,6 @@ export interface RectInit {
   readonly y: number;
   readonly width: number;
   readonly height: number;
-  readonly fill?: string;
 }
 
 export class Rect extends Shape {
@@ -26,9 +25,6 @@ export class Rect extends Shape {
     this.positionY = init.y;
     this.rectWidth = init.width;
     this.rectHeight = init.height;
-    if (init.fill !== undefined) {
-      this.setStyleAttribute("fill", init.fill);
-    }
   }
 
   get x(): number {

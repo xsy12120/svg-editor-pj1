@@ -1,5 +1,5 @@
 import type { EditorSession } from "../EditorSession.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import { AddToEdit } from "./AddToEdit.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
@@ -19,7 +19,7 @@ export class AddToCommand implements UndoableCommand<EditorSession> {
     if (target === undefined) {
       throw new Error(`no such container: ${this.targetId}`);
     }
-    if (!(target instanceof Group)) {
+    if (!(target instanceof ContainerShape)) {
       throw new Error(`not a container: ${this.targetId}`);
     }
 
@@ -30,7 +30,7 @@ export class AddToCommand implements UndoableCommand<EditorSession> {
     }
     if (
       shape === target ||
-      (shape instanceof Group &&
+      (shape instanceof ContainerShape &&
         (shape === target || shape.contains(target)))
     ) {
       throw new Error(

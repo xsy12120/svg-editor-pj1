@@ -8,7 +8,6 @@ export interface LineInit {
   readonly y1: number;
   readonly x2: number;
   readonly y2: number;
-  readonly stroke?: string;
 }
 
 export class Line extends Shape {
@@ -23,9 +22,6 @@ export class Line extends Shape {
     this.startY = init.y1;
     this.endX = init.x2;
     this.endY = init.y2;
-    if (init.stroke !== undefined) {
-      this.setStyleAttribute("stroke", init.stroke);
-    }
   }
 
   override move(dx: number, dy: number): void {

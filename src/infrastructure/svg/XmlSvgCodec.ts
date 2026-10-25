@@ -6,7 +6,7 @@ import type {
 } from "../../application/ports/SvgCodec.js";
 import type { ShapeFactory } from "../../application/shapes/ShapeFactory.js";
 import { Document } from "../../domain/model/Document.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import { SvgTransform } from "./SvgTransform.js";
 
@@ -117,7 +117,7 @@ export class XmlSvgCodec implements SvgCodec {
         id,
         attributes: shapeAttributes
       });
-      if (shape instanceof Group) {
+      if (shape instanceof ContainerShape) {
         const children = node[elementName];
         if (Array.isArray(children)) {
           for (const child of this.parseElements(
@@ -193,7 +193,7 @@ export class XmlSvgCodec implements SvgCodec {
       .join(" ");
     const tag = shape.svgTagName;
 
-    if (shape instanceof Group) {
+    if (shape instanceof ContainerShape) {
       lines.push(`${indent}<${tag} ${attributes}>`);
       for (const child of shape.children) {
         this.serializeShape(child, depth + 1, lines);

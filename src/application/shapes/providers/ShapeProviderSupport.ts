@@ -1,5 +1,4 @@
 import type { ShapeInit } from "../ShapeInit.js";
-import type { Shape } from "../../../domain/shapes/Shape.js";
 
 export function requireShapeId(
   value: string | undefined,
@@ -50,14 +49,4 @@ export function assertShapeType(init: ShapeInit, typeName: string): void {
       `${typeName} provider cannot create shape type: ${init.typeName}`
     );
   }
-}
-
-export function applyStyleAttributes(shape: Shape, init: ShapeInit): Shape {
-  for (const name of ["fill", "stroke", "stroke-width"]) {
-    const value = init.attributes[name];
-    if (value !== undefined) {
-      shape.setAttribute(name, value);
-    }
-  }
-  return shape;
 }

@@ -1,6 +1,6 @@
 import type { Document } from "../../domain/model/Document.js";
 import type { DocumentTreeRenderer } from "../../application/ports/DocumentTreeRenderer.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 
 export class CliTreeRenderer implements DocumentTreeRenderer {
@@ -34,7 +34,7 @@ export class CliTreeRenderer implements DocumentTreeRenderer {
     shape: Shape,
     prefix: string
   ): void {
-    if (!(shape instanceof Group)) {
+    if (!(shape instanceof ContainerShape)) {
       return;
     }
 

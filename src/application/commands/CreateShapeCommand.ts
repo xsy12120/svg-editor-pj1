@@ -1,6 +1,6 @@
 import type { EditorSession } from "../EditorSession.js";
 import type { ShapeFactory } from "../shapes/ShapeFactory.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import { CreateShapeEdit } from "./CreateShapeEdit.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import type { UndoableCommand } from "./UndoableCommand.js";
@@ -29,13 +29,13 @@ export class CreateShapeCommand implements UndoableCommand<EditorSession> {
       throw new Error(`id already exists: ${shape.id}`);
     }
 
-    let parent: Group | null = null;
+    let parent: ContainerShape | null = null;
     if (parsed.containerId !== undefined) {
       const container = document.findShape(parsed.containerId);
       if (container === undefined) {
         throw new Error(`no such container: ${parsed.containerId}`);
       }
-      if (!(container instanceof Group)) {
+      if (!(container instanceof ContainerShape)) {
         throw new Error(`not a container: ${parsed.containerId}`);
       }
       parent = container;

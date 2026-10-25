@@ -1,6 +1,6 @@
-import type { Group } from "../shapes/Group.js";
+import type { ContainerShape } from "../shapes/ContainerShape.js";
 
 export interface ShapePlacement {
-  readonly parent: Group | null;
+  readonly parent: ContainerShape | null;
   readonly index: number;
 }

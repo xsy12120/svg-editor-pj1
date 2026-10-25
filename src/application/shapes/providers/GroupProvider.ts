@@ -2,11 +2,7 @@ import { Group } from "../../../domain/shapes/Group.js";
 import type { Shape } from "../../../domain/shapes/Shape.js";
 import type { ShapeInit } from "../ShapeInit.js";
 import type { ShapeProvider } from "../ShapeProvider.js";
-import {
-  applyStyleAttributes,
-  assertShapeType,
-  requireShapeId
-} from "./ShapeProviderSupport.js";
+import { assertShapeType, requireShapeId } from "./ShapeProviderSupport.js";
 
 export class GroupProvider implements ShapeProvider {
   readonly typeName = "g";
@@ -25,6 +21,6 @@ export class GroupProvider implements ShapeProvider {
 
   create(init: ShapeInit): Shape {
     assertShapeType(init, this.typeName);
-    return applyStyleAttributes(new Group(init.id), init);
+    return new Group(init.id);
   }
 }

@@ -7,7 +7,6 @@ export interface CircleInit {
   readonly cx: number;
   readonly cy: number;
   readonly r: number;
-  readonly fill?: string;
 }
 
 export class Circle extends Shape {
@@ -20,9 +19,6 @@ export class Circle extends Shape {
     this.centerX = init.cx;
     this.centerY = init.cy;
     this.radius = init.r;
-    if (init.fill !== undefined) {
-      this.setStyleAttribute("fill", init.fill);
-    }
   }
 
   get cx(): number {

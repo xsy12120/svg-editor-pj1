@@ -8,7 +8,6 @@ export interface EllipseInit {
   readonly cy: number;
   readonly rx: number;
   readonly ry: number;
-  readonly fill?: string;
 }
 
 export class Ellipse extends Shape {
@@ -23,9 +22,6 @@ export class Ellipse extends Shape {
     this.centerY = init.cy;
     this.radiusX = init.rx;
     this.radiusY = init.ry;
-    if (init.fill !== undefined) {
-      this.setStyleAttribute("fill", init.fill);
-    }
   }
 
   override move(dx: number, dy: number): void {

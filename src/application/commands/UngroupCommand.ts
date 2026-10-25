@@ -1,5 +1,5 @@
 import type { EditorSession } from "../EditorSession.js";
-import { Group } from "../../domain/shapes/Group.js";
+import { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
 import { requireDocument } from "./ShapeCommandSupport.js";
 import { UngroupEdit } from "./UngroupEdit.js";
@@ -13,7 +13,7 @@ export class UngroupCommand implements UndoableCommand<EditorSession> {
   prepare(session: EditorSession): PreparedEdit<EditorSession> {
     const document = requireDocument(session);
     const group = document.findShape(this.groupId);
-    if (!(group instanceof Group)) {
+    if (!(group instanceof ContainerShape)) {
       throw new Error(`no such shape: ${this.groupId}`);
     }
 

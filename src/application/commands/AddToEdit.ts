@@ -1,6 +1,6 @@
 import type { EditorSession } from "../EditorSession.js";
 import type { ShapePlacement } from "../../domain/model/ShapePlacement.js";
-import type { Group } from "../../domain/shapes/Group.js";
+import type { ContainerShape } from "../../domain/shapes/ContainerShape.js";
 import type { Shape } from "../../domain/shapes/Shape.js";
 import type { CommandResult } from "./CommandResult.js";
 import type { PreparedEdit } from "./PreparedEdit.js";
@@ -8,7 +8,7 @@ import { requireDocument } from "./ShapeCommandSupport.js";
 
 export class AddToEdit implements PreparedEdit<EditorSession> {
   constructor(
-    private readonly target: Group,
+    private readonly target: ContainerShape,
     private readonly shape: Shape,
     private readonly originalPlacement: ShapePlacement
   ) {}
