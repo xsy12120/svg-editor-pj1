@@ -1,14 +1,19 @@
 import type { Readable, Writable } from "node:stream";
 
 import { EditorSession } from "../application/EditorSession.js";
+import { AddToCommandProvider } from "../application/commands/AddToCommandProvider.js";
+import { BackCommandProvider } from "../application/commands/BackCommandProvider.js";
 import { CreateCommandProvider } from "../application/commands/CreateCommandProvider.js";
 import { DeleteCommandProvider } from "../application/commands/DeleteCommandProvider.js";
+import { FrontCommandProvider } from "../application/commands/FrontCommandProvider.js";
+import { GroupCommandProvider } from "../application/commands/GroupCommandProvider.js";
 import { InitCommandProvider } from "../application/commands/InitCommandProvider.js";
 import { MoveCommandProvider } from "../application/commands/MoveCommandProvider.js";
 import { RedoCommandProvider } from "../application/commands/RedoCommandProvider.js";
 import { ScaleCommandProvider } from "../application/commands/ScaleCommandProvider.js";
 import { SetAttributeCommandProvider } from "../application/commands/SetAttributeCommandProvider.js";
 import { TreeCommandProvider } from "../application/commands/TreeCommandProvider.js";
+import { UngroupCommandProvider } from "../application/commands/UngroupCommandProvider.js";
 import { UndoCommandProvider } from "../application/commands/UndoCommandProvider.js";
 import { CommandRegistry } from "../application/extensions/CommandRegistry.js";
 import { CommandInvoker } from "../application/history/CommandInvoker.js";
@@ -46,6 +51,11 @@ export function createCliApplication(
   commands.register(new ScaleCommandProvider());
   commands.register(new SetAttributeCommandProvider());
   commands.register(new DeleteCommandProvider());
+  commands.register(new GroupCommandProvider());
+  commands.register(new UngroupCommandProvider());
+  commands.register(new AddToCommandProvider());
+  commands.register(new FrontCommandProvider());
+  commands.register(new BackCommandProvider());
   commands.register(new TreeCommandProvider(new CliTreeRenderer()));
   commands.register(new UndoCommandProvider(invoker));
   commands.register(new RedoCommandProvider(invoker));
