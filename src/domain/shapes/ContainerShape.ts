@@ -3,6 +3,7 @@ import { Shape } from "./Shape.js";
 
 export abstract class ContainerShape extends Shape {
   private readonly childShapes: Shape[] = [];
+  private attachedToDocument = false;
 
   get canUngroup(): boolean {
     return true;
@@ -12,11 +13,25 @@ export abstract class ContainerShape extends Shape {
     return this.childShapes;
   }
 
+  get isAttachedToDocument(): boolean {
+    return this.attachedToDocument;
+  }
+
   addChild(shape: Shape): void {
     this.insertChildAt(shape, this.childShapes.length);
   }
 
   insertChildAt(shape: Shape, index: number): void {
+    this.assertDirectMutationAllowed();
+    this.insertChildAtInternal(shape, index);
+  }
+
+  /** @internal Document is the only owner of attached-tree mutation. */
+  insertChildAtFromDocument(shape: Shape, index: number): void {
+    this.insertChildAtInternal(shape, index);
+  }
+
+  private insertChildAtInternal(shape: Shape, index: number): void {
     if (
       shape === this ||
       (shape instanceof ContainerShape && shape.contains(this))
@@ -72,6 +87,16 @@ export abstract class ContainerShape extends Shape {
   }
 
   removeChild(id: string): Shape | undefined {
+    this.assertDirectMutationAllowed();
+    return this.removeChildInternal(id);
+  }
+
+  /** @internal Document is the only owner of attached-tree mutation. */
+  removeChildFromDocument(id: string): Shape | undefined {
+    return this.removeChildInternal(id);
+  }
+
+  private removeChildInternal(id: string): Shape | undefined {
     const directIndex = this.childShapes.findIndex((child) => child.id === id);
     if (directIndex >= 0) {
       return this.childShapes.splice(directIndex, 1)[0];
@@ -79,13 +104,33 @@ export abstract class ContainerShape extends Shape {
 
     for (const child of this.childShapes) {
       if (child instanceof ContainerShape) {
-        const removed = child.removeChild(id);
+        const removed = child.removeChildFromDocument(id);
         if (removed !== undefined) {
           return removed;
         }
       }
     }
     return undefined;
+  }
+
+  /** @internal */
+  markAttachedToDocument(): void {
+    this.attachedToDocument = true;
+    for (const child of this.childShapes) {
+      if (child instanceof ContainerShape) {
+        child.markAttachedToDocument();
+      }
+    }
+  }
+
+  /** @internal */
+  markDetachedFromDocument(): void {
+    this.attachedToDocument = false;
+    for (const child of this.childShapes) {
+      if (child instanceof ContainerShape) {
+        child.markDetachedFromDocument();
+      }
+    }
   }
 
   override *walkTree(): Generator<Shape> {
@@ -123,5 +168,13 @@ export abstract class ContainerShape extends Shape {
         }
       }
     };
+  }
+
+  private assertDirectMutationAllowed(): void {
+    if (this.attachedToDocument) {
+      throw new Error(
+        `container structure must be changed through Document: ${this.id}`
+      );
+    }
   }
 }

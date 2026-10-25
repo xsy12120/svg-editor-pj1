@@ -70,13 +70,16 @@ export class Document {
     const shape =
       placement.parent === null
         ? this.shapeList.splice(placement.index, 1)[0]
-        : placement.parent.removeChild(id);
+        : placement.parent.removeChildFromDocument(id);
     if (shape === undefined) {
       return undefined;
     }
 
     for (const descendant of shape.walkTree()) {
       this.shapesById.delete(descendant.id);
+    }
+    if (shape instanceof ContainerShape) {
+      shape.markDetachedFromDocument();
     }
     return shape;
   }
@@ -108,11 +111,14 @@ export class Document {
       if (!this.hasShape(parent.id)) {
         throw new Error(`no such container: ${parent.id}`);
       }
-      parent.insertChildAt(shape, index);
+      parent.insertChildAtFromDocument(shape, index);
     }
 
     for (const descendant of subtree) {
       this.shapesById.set(descendant.id, descendant);
+    }
+    if (shape instanceof ContainerShape) {
+      shape.markAttachedToDocument();
     }
   }
 

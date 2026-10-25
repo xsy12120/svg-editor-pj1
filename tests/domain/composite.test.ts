@@ -116,4 +116,27 @@ describe("Composite shape tree", () => {
       "r1"
     ]);
   });
+
+  it("requires attached-container mutations to go through Document", () => {
+    const group = new Group("g1");
+    const child = rect("r1", 0, 0, 10, 10);
+    const added = rect("r2", 20, 20, 10, 10);
+    group.addChild(child);
+    const document = new Document(800, 600);
+    document.addShape(group);
+    document.addShape(added);
+
+    expect(() => group.addChild(rect("r3", 0, 0, 5, 5))).toThrow(
+      "container structure must be changed through Document: g1"
+    );
+    expect(() => group.removeChild("r1")).toThrow(
+      "container structure must be changed through Document: g1"
+    );
+
+    document.detachShape("r2");
+    document.insertShapeAt(added, group, 1);
+
+    expect(group.children.map((shape) => shape.id)).toEqual(["r1", "r2"]);
+    expect(document.findShape("r2")).toBe(added);
+  });
 });
