@@ -1,22 +1,23 @@
 import type { Shape } from "../shapes/Shape.js";
 import { ContainerShape } from "../shapes/ContainerShape.js";
+import { CanvasSize } from "./CanvasSize.js";
 import type { ShapePlacement } from "./ShapePlacement.js";
 
 export class Document {
   private readonly shapeList: Shape[] = [];
   private readonly shapesById = new Map<string, Shape>();
+  private canvasSize: CanvasSize;
 
-  constructor(
-    private canvasWidth: number,
-    private canvasHeight: number
-  ) {}
+  constructor(width: number, height: number) {
+    this.canvasSize = new CanvasSize(width, height);
+  }
 
   get width(): number {
-    return this.canvasWidth;
+    return this.canvasSize.width;
   }
 
   get height(): number {
-    return this.canvasHeight;
+    return this.canvasSize.height;
   }
 
   get shapes(): readonly Shape[] {
@@ -28,8 +29,7 @@ export class Document {
   }
 
   resize(width: number, height: number): void {
-    this.canvasWidth = width;
-    this.canvasHeight = height;
+    this.canvasSize = new CanvasSize(width, height);
   }
 
   hasShape(id: string): boolean {

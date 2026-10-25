@@ -1,5 +1,6 @@
 import { Shape } from "./Shape.js";
 import type { GeometryState } from "./GeometryState.js";
+import { Point } from "./Point.js";
 import type { ShapeAttribute, ShapeDescriptor } from "./ShapeDescriptor.js";
 
 export interface TextInit {
@@ -10,25 +11,24 @@ export interface TextInit {
 }
 
 export class Text extends Shape {
-  private positionX: number;
-  private positionY: number;
+  private position: Point;
   private textContent: string;
 
   constructor(init: TextInit) {
     super(init.id);
-    this.positionX = init.x;
-    this.positionY = init.y;
+    this.position = new Point(init.x, init.y);
     this.textContent = init.content;
   }
 
   override move(dx: number, dy: number): void {
-    this.positionX += dx;
-    this.positionY += dy;
+    this.position = this.position.translate(dx, dy);
   }
 
   override scale(factor: number): void {
-    this.positionX *= factor;
-    this.positionY *= factor;
+    if (!Number.isFinite(factor) || factor <= 0) {
+      throw new Error("scale factor must be positive");
+    }
+    this.position = this.position.scale(factor);
   }
 
   override get svgTagName(): string {
@@ -37,8 +37,8 @@ export class Text extends Shape {
 
   override toSvgAttributes(): readonly ShapeAttribute[] {
     const attributes: ShapeAttribute[] = [
-      { name: "x", value: String(this.positionX) },
-      { name: "y", value: String(this.positionY) }
+      { name: "x", value: String(this.position.x) },
+      { name: "y", value: String(this.position.y) }
     ];
     this.appendStyleAttributes(attributes);
     return attributes;
@@ -49,12 +49,10 @@ export class Text extends Shape {
   }
 
   override captureGeometryState(): GeometryState {
-    const x = this.positionX;
-    const y = this.positionY;
+    const position = this.position;
     return {
       restore: (): void => {
-        this.positionX = x;
-        this.positionY = y;
+        this.position = position;
       }
     };
   }
@@ -66,9 +64,9 @@ export class Text extends Shape {
 
     switch (name) {
       case "x":
-        return String(this.positionX);
+        return String(this.position.x);
       case "y":
-        return String(this.positionY);
+        return String(this.position.y);
       case "text":
         return this.textContent;
       default:
@@ -99,8 +97,8 @@ export class Text extends Shape {
 
   override toDescriptor(): ShapeDescriptor {
     const attributes: ShapeAttribute[] = [
-      { name: "x", value: String(this.positionX) },
-      { name: "y", value: String(this.positionY) },
+      { name: "x", value: String(this.position.x) },
+      { name: "y", value: String(this.position.y) },
       { name: "text", value: this.textContent }
     ];
     this.appendStyleAttributes(attributes);
@@ -114,9 +112,9 @@ export class Text extends Shape {
     }
 
     if (name === "x") {
-      this.positionX = parsed;
+      this.position = new Point(parsed, this.position.y);
     } else {
-      this.positionY = parsed;
+      this.position = new Point(this.position.x, parsed);
     }
   }
 }

@@ -1,5 +1,7 @@
 import { Shape } from "./Shape.js";
 import type { GeometryState } from "./GeometryState.js";
+import { Point } from "./Point.js";
+import { Size } from "./Size.js";
 import type {
   ShapeAttribute,
   ShapeDescriptor
@@ -14,45 +16,43 @@ export interface RectInit {
 }
 
 export class Rect extends Shape {
-  private positionX: number;
-  private positionY: number;
-  private rectWidth: number;
-  private rectHeight: number;
+  private position: Point;
+  private dimensions: Size;
 
   constructor(init: RectInit) {
     super(init.id);
-    this.positionX = init.x;
-    this.positionY = init.y;
-    this.rectWidth = init.width;
-    this.rectHeight = init.height;
+    this.position = new Point(init.x, init.y);
+    this.dimensions = new Size(init.width, init.height);
   }
 
   get x(): number {
-    return this.positionX;
+    return this.position.x;
   }
 
   get y(): number {
-    return this.positionY;
+    return this.position.y;
   }
 
   get width(): number {
-    return this.rectWidth;
+    return this.dimensions.width;
   }
 
   get height(): number {
-    return this.rectHeight;
+    return this.dimensions.height;
   }
 
   override move(dx: number, dy: number): void {
-    this.positionX += dx;
-    this.positionY += dy;
+    this.position = this.position.translate(dx, dy);
   }
 
   override scale(factor: number): void {
-    this.positionX *= factor;
-    this.positionY *= factor;
-    this.rectWidth *= factor;
-    this.rectHeight *= factor;
+    if (!Number.isFinite(factor) || factor <= 0) {
+      throw new Error("scale factor must be positive");
+    }
+    const position = this.position.scale(factor);
+    const dimensions = this.dimensions.scale(factor);
+    this.position = position;
+    this.dimensions = dimensions;
   }
 
   override get svgTagName(): string {
@@ -61,27 +61,23 @@ export class Rect extends Shape {
 
   override toSvgAttributes(): readonly ShapeAttribute[] {
     const attributes: ShapeAttribute[] = [
-      { name: "x", value: String(this.positionX) },
-      { name: "y", value: String(this.positionY) },
-      { name: "width", value: String(this.rectWidth) },
-      { name: "height", value: String(this.rectHeight) }
+      { name: "x", value: String(this.position.x) },
+      { name: "y", value: String(this.position.y) },
+      { name: "width", value: String(this.dimensions.width) },
+      { name: "height", value: String(this.dimensions.height) }
     ];
     this.appendStyleAttributes(attributes);
     return attributes;
   }
 
   override captureGeometryState(): GeometryState {
-    const x = this.positionX;
-    const y = this.positionY;
-    const width = this.rectWidth;
-    const height = this.rectHeight;
+    const position = this.position;
+    const dimensions = this.dimensions;
 
     return {
       restore: (): void => {
-        this.positionX = x;
-        this.positionY = y;
-        this.rectWidth = width;
-        this.rectHeight = height;
+        this.position = position;
+        this.dimensions = dimensions;
       }
     };
   }
@@ -93,13 +89,13 @@ export class Rect extends Shape {
 
     switch (name) {
       case "x":
-        return String(this.positionX);
+        return String(this.position.x);
       case "y":
-        return String(this.positionY);
+        return String(this.position.y);
       case "width":
-        return String(this.rectWidth);
+        return String(this.dimensions.width);
       case "height":
-        return String(this.rectHeight);
+        return String(this.dimensions.height);
       default:
         throw new Error(`unknown attribute: ${name}`);
     }
@@ -113,16 +109,16 @@ export class Rect extends Shape {
     const parsed = this.parseRequiredNumber(name, value);
     switch (name) {
       case "x":
-        this.positionX = parsed;
+        this.position = new Point(parsed, this.position.y);
         return;
       case "y":
-        this.positionY = parsed;
+        this.position = new Point(this.position.x, parsed);
         return;
       case "width":
-        this.rectWidth = this.parsePositiveNumber(name, parsed);
+        this.dimensions = new Size(parsed, this.dimensions.height);
         return;
       case "height":
-        this.rectHeight = this.parsePositiveNumber(name, parsed);
+        this.dimensions = new Size(this.dimensions.width, parsed);
         return;
       default:
         throw new Error(`unknown attribute: ${name}`);
@@ -131,10 +127,10 @@ export class Rect extends Shape {
 
   override toDescriptor(): ShapeDescriptor {
     const attributes: ShapeAttribute[] = [
-      { name: "x", value: String(this.positionX) },
-      { name: "y", value: String(this.positionY) },
-      { name: "w", value: String(this.rectWidth) },
-      { name: "h", value: String(this.rectHeight) }
+      { name: "x", value: String(this.position.x) },
+      { name: "y", value: String(this.position.y) },
+      { name: "w", value: String(this.dimensions.width) },
+      { name: "h", value: String(this.dimensions.height) }
     ];
     attributes.push(...this.styleAttributes());
 
@@ -166,10 +162,4 @@ export class Rect extends Shape {
     return parsed;
   }
 
-  private parsePositiveNumber(name: string, value: number): number {
-    if (value <= 0) {
-      throw new Error(`${name} must be positive`);
-    }
-    return value;
-  }
 }

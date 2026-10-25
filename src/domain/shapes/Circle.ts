@@ -1,5 +1,6 @@
 import { Shape } from "./Shape.js";
 import type { GeometryState } from "./GeometryState.js";
+import { Point } from "./Point.js";
 import type { ShapeAttribute, ShapeDescriptor } from "./ShapeDescriptor.js";
 
 export interface CircleInit {
@@ -10,23 +11,24 @@ export interface CircleInit {
 }
 
 export class Circle extends Shape {
-  private centerX: number;
-  private centerY: number;
+  private center: Point;
   private radius: number;
 
   constructor(init: CircleInit) {
     super(init.id);
-    this.centerX = init.cx;
-    this.centerY = init.cy;
+    this.center = new Point(init.cx, init.cy);
+    if (!Number.isFinite(init.r) || init.r <= 0) {
+      throw new Error("circle radius must be positive");
+    }
     this.radius = init.r;
   }
 
   get cx(): number {
-    return this.centerX;
+    return this.center.x;
   }
 
   get cy(): number {
-    return this.centerY;
+    return this.center.y;
   }
 
   get r(): number {
@@ -34,14 +36,20 @@ export class Circle extends Shape {
   }
 
   override move(dx: number, dy: number): void {
-    this.centerX += dx;
-    this.centerY += dy;
+    this.center = this.center.translate(dx, dy);
   }
 
   override scale(factor: number): void {
-    this.centerX *= factor;
-    this.centerY *= factor;
-    this.radius *= factor;
+    if (!Number.isFinite(factor) || factor <= 0) {
+      throw new Error("scale factor must be positive");
+    }
+    const center = this.center.scale(factor);
+    const radius = this.radius * factor;
+    if (!Number.isFinite(radius) || radius <= 0) {
+      throw new Error("circle radius must be positive");
+    }
+    this.center = center;
+    this.radius = radius;
   }
 
   override get svgTagName(): string {
@@ -50,8 +58,8 @@ export class Circle extends Shape {
 
   override toSvgAttributes(): readonly ShapeAttribute[] {
     const attributes: ShapeAttribute[] = [
-      { name: "cx", value: String(this.centerX) },
-      { name: "cy", value: String(this.centerY) },
+      { name: "cx", value: String(this.center.x) },
+      { name: "cy", value: String(this.center.y) },
       { name: "r", value: String(this.radius) }
     ];
     this.appendStyleAttributes(attributes);
@@ -59,13 +67,11 @@ export class Circle extends Shape {
   }
 
   override captureGeometryState(): GeometryState {
-    const cx = this.centerX;
-    const cy = this.centerY;
+    const center = this.center;
     const r = this.radius;
     return {
       restore: (): void => {
-        this.centerX = cx;
-        this.centerY = cy;
+        this.center = center;
         this.radius = r;
       }
     };
@@ -78,9 +84,9 @@ export class Circle extends Shape {
 
     switch (name) {
       case "cx":
-        return String(this.centerX);
+        return String(this.center.x);
       case "cy":
-        return String(this.centerY);
+        return String(this.center.y);
       case "r":
         return String(this.radius);
       default:
@@ -96,10 +102,10 @@ export class Circle extends Shape {
     const parsed = this.parseRequiredNumber(name, value);
     switch (name) {
       case "cx":
-        this.centerX = parsed;
+        this.center = new Point(parsed, this.center.y);
         return;
       case "cy":
-        this.centerY = parsed;
+        this.center = new Point(this.center.x, parsed);
         return;
       case "r":
         if (parsed <= 0) {
@@ -114,8 +120,8 @@ export class Circle extends Shape {
 
   override toDescriptor(): ShapeDescriptor {
     const attributes: ShapeAttribute[] = [
-      { name: "cx", value: String(this.centerX) },
-      { name: "cy", value: String(this.centerY) },
+      { name: "cx", value: String(this.center.x) },
+      { name: "cy", value: String(this.center.y) },
       { name: "r", value: String(this.radius) }
     ];
     this.appendStyleAttributes(attributes);

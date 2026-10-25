@@ -1,5 +1,6 @@
 import { Shape } from "./Shape.js";
 import type { GeometryState } from "./GeometryState.js";
+import { Point } from "./Point.js";
 import type { ShapeAttribute, ShapeDescriptor } from "./ShapeDescriptor.js";
 
 export interface LineInit {
@@ -11,31 +12,28 @@ export interface LineInit {
 }
 
 export class Line extends Shape {
-  private startX: number;
-  private startY: number;
-  private endX: number;
-  private endY: number;
+  private start: Point;
+  private end: Point;
 
   constructor(init: LineInit) {
     super(init.id);
-    this.startX = init.x1;
-    this.startY = init.y1;
-    this.endX = init.x2;
-    this.endY = init.y2;
+    this.start = new Point(init.x1, init.y1);
+    this.end = new Point(init.x2, init.y2);
   }
 
   override move(dx: number, dy: number): void {
-    this.startX += dx;
-    this.startY += dy;
-    this.endX += dx;
-    this.endY += dy;
+    this.start = this.start.translate(dx, dy);
+    this.end = this.end.translate(dx, dy);
   }
 
   override scale(factor: number): void {
-    this.startX *= factor;
-    this.startY *= factor;
-    this.endX *= factor;
-    this.endY *= factor;
+    if (!Number.isFinite(factor) || factor <= 0) {
+      throw new Error("scale factor must be positive");
+    }
+    const start = this.start.scale(factor);
+    const end = this.end.scale(factor);
+    this.start = start;
+    this.end = end;
   }
 
   override get svgTagName(): string {
@@ -44,26 +42,22 @@ export class Line extends Shape {
 
   override toSvgAttributes(): readonly ShapeAttribute[] {
     const attributes: ShapeAttribute[] = [
-      { name: "x1", value: String(this.startX) },
-      { name: "y1", value: String(this.startY) },
-      { name: "x2", value: String(this.endX) },
-      { name: "y2", value: String(this.endY) }
+      { name: "x1", value: String(this.start.x) },
+      { name: "y1", value: String(this.start.y) },
+      { name: "x2", value: String(this.end.x) },
+      { name: "y2", value: String(this.end.y) }
     ];
     this.appendStyleAttributes(attributes);
     return attributes;
   }
 
   override captureGeometryState(): GeometryState {
-    const x1 = this.startX;
-    const y1 = this.startY;
-    const x2 = this.endX;
-    const y2 = this.endY;
+    const start = this.start;
+    const end = this.end;
     return {
       restore: (): void => {
-        this.startX = x1;
-        this.startY = y1;
-        this.endX = x2;
-        this.endY = y2;
+        this.start = start;
+        this.end = end;
       }
     };
   }
@@ -75,13 +69,13 @@ export class Line extends Shape {
 
     switch (name) {
       case "x1":
-        return String(this.startX);
+        return String(this.start.x);
       case "y1":
-        return String(this.startY);
+        return String(this.start.y);
       case "x2":
-        return String(this.endX);
+        return String(this.end.x);
       case "y2":
-        return String(this.endY);
+        return String(this.end.y);
       default:
         throw new Error(`unknown attribute: ${name}`);
     }
@@ -95,16 +89,16 @@ export class Line extends Shape {
     const parsed = this.parseRequiredNumber(name, value);
     switch (name) {
       case "x1":
-        this.startX = parsed;
+        this.start = new Point(parsed, this.start.y);
         return;
       case "y1":
-        this.startY = parsed;
+        this.start = new Point(this.start.x, parsed);
         return;
       case "x2":
-        this.endX = parsed;
+        this.end = new Point(parsed, this.end.y);
         return;
       case "y2":
-        this.endY = parsed;
+        this.end = new Point(this.end.x, parsed);
         return;
       default:
         throw new Error(`unknown attribute: ${name}`);
@@ -113,10 +107,10 @@ export class Line extends Shape {
 
   override toDescriptor(): ShapeDescriptor {
     const attributes: ShapeAttribute[] = [
-      { name: "x1", value: String(this.startX) },
-      { name: "y1", value: String(this.startY) },
-      { name: "x2", value: String(this.endX) },
-      { name: "y2", value: String(this.endY) }
+      { name: "x1", value: String(this.start.x) },
+      { name: "y1", value: String(this.start.y) },
+      { name: "x2", value: String(this.end.x) },
+      { name: "y2", value: String(this.end.y) }
     ];
     this.appendStyleAttributes(attributes);
     return { typeName: "line", id: this.id, attributes };

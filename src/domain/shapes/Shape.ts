@@ -4,14 +4,18 @@ import type {
   ShapeDescriptor
 } from "./ShapeDescriptor.js";
 import { ShapeStyle } from "./ShapeStyle.js";
+import { ShapeId } from "./ShapeId.js";
 
 export abstract class Shape {
   private readonly style = new ShapeStyle();
+  private readonly shapeId: ShapeId;
 
-  constructor(private readonly shapeId: string) {}
+  constructor(id: string | ShapeId) {
+    this.shapeId = typeof id === "string" ? new ShapeId(id) : id;
+  }
 
   get id(): string {
-    return this.shapeId;
+    return this.shapeId.toString();
   }
 
   get fill(): string | undefined {
